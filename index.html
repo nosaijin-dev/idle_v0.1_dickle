@@ -331,43 +331,52 @@
                         </div>
                     </div>
                 </div>
-                <div id="tab-records" class="flex-1 flex flex-col min-h-[900px] overflow-y-auto custom-scroll pr-2 hidden">
-                    <div class="c-title mb-3 text-xl border-b border-gray-800 pb-2 flex justify-between">
-                        <span>冒險紀錄</span><span id="adventure-summary-title" class="text-base c-sys font-normal">紀錄整理中</span>
-                    </div>
-                    <div id="adventure-summary" class="grid grid-cols-4 gap-3 mb-4"></div>
-                    <div class="grid grid-cols-3 gap-4 flex-1 min-h-0">
-                        <div class="flex flex-col min-h-0">
-                            <div class="c-title mb-2 border-b border-gray-800 pb-1">地圖進度</div>
-                            <div id="map-progress-list" class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2"></div>
-                        </div>
-                        <div class="flex flex-col min-h-0">
-                            <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
-                                <span>掉落圖鑑</span>
-                                <select id="record-map-select" class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-sm max-w-[220px]" onchange="game.renderAdventureRecords(this.value)"></select>
-                            </div>
-                            <div id="drop-codex-list" class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2"></div>
-                        </div>
-                        <div class="flex flex-col min-h-0">
-                            <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
-                                <span>套裝收集</span><span id="set-collection-count" class="text-sm c-sys font-normal">0/0</span>
-                            </div>
-                            <div id="set-collection-list" class="max-h-[34%] overflow-y-auto custom-scroll pr-2 space-y-2 mb-4"></div>
-                            <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
-                                <span>資料查詢</span><span id="record-search-count" class="text-sm c-sys font-normal">0</span>
-                            </div>
-                            <div class="flex gap-2 mb-2">
-                                <input id="record-search-input" class="flex-1 min-w-0 bg-black border border-gray-600 text-white py-1 px-2 rounded text-sm" placeholder="搜尋物品、怪物、地圖" oninput="game.renderDataSearch(this.value)">
-                                <button class="btn-ui !px-2 !py-1 text-xs" onclick="document.getElementById('record-search-input').value=''; game.renderDataSearch('');">清除</button>
-                            </div>
-                            <div id="record-search-list" class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2"></div>
-                        </div>
-                    </div>
-                    <div class="c-title mt-4 mb-2 border-b border-gray-800 pb-1 flex justify-between">
-                        <span>成就欄</span><span id="achievement-count" class="text-sm c-sys font-normal">0/0</span>
-                    </div>
-                    <div id="achievement-list" class="max-h-[260px] overflow-y-auto custom-scroll pr-2 grid grid-cols-2 gap-2"></div>
-                </div>
+                <div id="tab-records" class="flex-1 flex flex-col h-full overflow-y-auto custom-scroll pr-3 space-y-6 hidden">
+    <div>
+        <div class="c-title mb-3 text-xl border-b border-gray-800 pb-2 flex justify-between">
+            <span>冒險紀錄</span><span id="adventure-summary-title" class="text-base c-sys font-normal">紀錄整理中</span>
+        </div>
+        <div id="adventure-summary" class="grid grid-cols-4 gap-3"></div>
+    </div>
+
+    <div>
+        <div class="c-title mb-2 border-b border-gray-800 pb-1">地圖進度</div>
+        <div id="map-progress-list" class="space-y-2"></div>
+    </div>
+
+    <div>
+        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
+            <span>掉落圖鑑</span>
+            <select id="record-map-select" class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-sm max-w-[220px]" onchange="game.renderAdventureRecords(this.value)"></select>
+        </div>
+        <div id="drop-codex-list" class="space-y-2"></div>
+    </div>
+
+    <div>
+        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
+            <span>套裝收集</span><span id="set-collection-count" class="text-sm c-sys font-normal">0/0</span>
+        </div>
+        <div id="set-collection-list" class="space-y-2"></div>
+    </div>
+
+    <div>
+        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
+            <span>資料查詢</span><span id="record-search-count" class="text-sm c-sys font-normal">0</span>
+        </div>
+        <div class="flex gap-2 mb-2">
+            <input id="record-search-input" class="flex-1 min-w-0 bg-black border border-gray-600 text-white py-1 px-2 rounded text-sm" placeholder="搜尋物品、怪物、地圖" oninput="game.renderDataSearch(this.value)">
+            <button class="btn-ui !px-2 !py-1 text-xs" onclick="document.getElementById('record-search-input').value=''; game.renderDataSearch('');">清除</button>
+        </div>
+        <div id="record-search-list" class="space-y-2"></div>
+    </div>
+
+    <div class="pb-8">
+        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between">
+            <span>成就欄</span><span id="achievement-count" class="text-sm c-sys font-normal">0/0</span>
+        </div>
+        <div id="achievement-list" class="grid grid-cols-2 gap-2"></div>
+    </div>
+</div>
                 <div id="tab-settings" class="flex-1 flex flex-col h-full overflow-hidden hidden">
                     <div class="flex-1 overflow-y-auto custom-scroll pr-2">
                         <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl">自動功能設定</div>
