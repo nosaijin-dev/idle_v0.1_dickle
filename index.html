@@ -2720,6 +2720,8 @@ const game = {
     recordItemObtained: function(itemId, count = 1, silent = false) {
         if (!itemId || !ITEMS[itemId] || this.isRemovedSystemItem(itemId)) return;
         this.ensureAdventureState();
+        // 判斷是否為「第一次獲得」的全新物品
+        let isNewItem = !this.state.adventure.obtainedItems[itemId];
         let row = this.state.adventure.obtainedItems[itemId];
         if (!row || row === true || typeof row === 'number') {
             row = this.state.adventure.obtainedItems[itemId] = { count: 0, firstAt: Date.now() };
@@ -2729,6 +2731,11 @@ const game = {
         if (!silent) {
             this.checkAchievements();
             this.refreshAdventureRecordsIfOpen();
+
+            // 🎯 只有當打到全新物品、且人在冒險紀錄分頁時，才精準更新套裝（2/7 -> 3/7）
+            if (isNewItem && this.isRecordsTabOpen()) {
+                this.renderSetCollection();
+            }
         }
     },
     hasObtainedItem: function(itemId) {
