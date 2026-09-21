@@ -2971,6 +2971,10 @@ const game = {
             this.achievementCheckBusy = false;
         }
         if (unlockedAny) {
+            // 🔔 門鈴響了！有新成就達成，立刻刷新成就欄！
+            if (this.isRecordsTabOpen()) {
+                this.renderAchievementList();
+            }
             this.refreshAdventureRecordsIfOpen();
             if (this.isGameLoaded()) this.updateUI();
         }
