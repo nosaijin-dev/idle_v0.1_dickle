@@ -2975,20 +2975,26 @@ const game = {
         target = Math.max(1, Number(target) || 1);
         return { current, target, percent: Math.min(100, Math.floor(current / target * 100)), text: `${Math.min(current, target).toLocaleString()}/${target.toLocaleString()}` };
     },
-    renderAdventureRecords: function(mapId = null) {
-        if (this.adventureRecordRefreshTimer) {
-            clearTimeout(this.adventureRecordRefreshTimer);
-            this.adventureRecordRefreshTimer = null;
-        }
-        this.ensureAdventureState();
-        if (mapId && MAPS[mapId]) this.adventureSelectedMap = mapId;
-        let selectedMap = this.adventureSelectedMap && MAPS[this.adventureSelectedMap] ? this.adventureSelectedMap : (MAPS[this.state.currentMap] ? this.state.currentMap : Object.keys(MAPS)[0]);
-        this.adventureSelectedMap = selectedMap;
-        this.renderAdventureSummary();
+   renderAdventureRecords: function(mapId = null) {
+    if (this.adventureRecordRefreshTimer) {
+        clearTimeout(this.adventureRecordRefreshTimer);
+        this.adventureRecordRefreshTimer = null;
+    }
+    this.ensureAdventureState();
+    if (mapId && MAPS[mapId]) this.adventureSelectedMap = mapId;
+    let selectedMap = this.adventureSelectedMap && MAPS[this.adventureSelectedMap] ? this.adventureSelectedMap : (MAPS[this.state.currentMap] ? this.state.currentMap : Object.keys(MAPS)[0]);
+    this.adventureSelectedMap = selectedMap;
+
+    // 優先載入頂部摘要
+    this.renderAdventureSummary();
+
+    // 延後至下一幀載入其餘內容，避免切換分頁時卡頓
+    requestAnimationFrame(() => {
         this.renderMapProgressList(selectedMap);
         this.renderSetCollection();
         this.renderDataSearch();
         this.renderAchievementList();
+    });
     },
     renderAdventureSummary: function() {
         const title = document.getElementById('adventure-summary-title');
