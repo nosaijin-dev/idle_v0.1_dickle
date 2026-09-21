@@ -2985,13 +2985,25 @@ const game = {
         let selectedMap = this.adventureSelectedMap && MAPS[this.adventureSelectedMap] ? this.adventureSelectedMap : (MAPS[this.state.currentMap] ? this.state.currentMap : Object.keys(MAPS)[0]);
         this.adventureSelectedMap = selectedMap;
 
-        // 1. 頂部摘要：純文字數字，隨定時器跳動，幾乎不佔 CPU
+        // 1. 頂部摘要：隨定時器即時跳動
         this.renderAdventureSummary();
 
-        // 2. 地圖進度：只有在展開時，才隨定時器即時跳動（380->381、58->59）
+        // 2. 地圖進度：初次載入或展開時，隨定時器即時更新
         const mapList = document.getElementById('map-progress-list');
-        if (mapList && !mapList.classList.contains('hidden')) {
+        if (mapList && (!mapList.children.length || !mapList.classList.contains('hidden'))) {
             this.renderMapProgressList(selectedMap);
+        }
+
+        // 3. 套裝收集：只在第一次進入（盒子為空時）計算出 2/7 並填入，後續定時器絕不重畫
+        const setList = document.getElementById('set-collection-list');
+        if (setList && !setList.children.length) {
+            this.renderSetCollection();
+        }
+
+        // 4. 成就欄：只在第一次進入（盒子為空時）計算出 33/33 並填入，後續定時器絕不重畫
+        const achList = document.getElementById('achievement-list');
+        if (achList && !achList.children.length) {
+            this.renderAchievementList();
         }
     },
     renderAdventureSummary: function() {
