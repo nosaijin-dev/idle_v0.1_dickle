@@ -2976,26 +2976,24 @@ const game = {
         return { current, target, percent: Math.min(100, Math.floor(current / target * 100)), text: `${Math.min(current, target).toLocaleString()}/${target.toLocaleString()}` };
     },
   renderAdventureRecords: function(mapId = null) {
-    if (this.adventureRecordRefreshTimer) {
-        clearTimeout(this.adventureRecordRefreshTimer);
-        this.adventureRecordRefreshTimer = null;
-    }
-    this.ensureAdventureState();
-    if (mapId && MAPS[mapId]) this.adventureSelectedMap = mapId;
-    let selectedMap = this.adventureSelectedMap && MAPS[this.adventureSelectedMap] ? this.adventureSelectedMap : (MAPS[this.state.currentMap] ? this.state.currentMap : Object.keys(MAPS)[0]);
-    this.adventureSelectedMap = selectedMap;
+        if (this.adventureRecordRefreshTimer) {
+            clearTimeout(this.adventureRecordRefreshTimer);
+            this.adventureRecordRefreshTimer = null;
+        }
+        this.ensureAdventureState();
+        if (mapId && MAPS[mapId]) this.adventureSelectedMap = mapId;
+        let selectedMap = this.adventureSelectedMap && MAPS[this.adventureSelectedMap] ? this.adventureSelectedMap : (MAPS[this.state.currentMap] ? this.state.currentMap : Object.keys(MAPS)[0]);
+        this.adventureSelectedMap = selectedMap;
 
-    // 1. 優先渲染頂部摘要，讓分頁以最快速度呈現在畫面上
-    this.renderAdventureSummary();
+        // 1. 頂部摘要：純文字數字，隨定時器跳動，幾乎不佔 CPU
+        this.renderAdventureSummary();
 
-    // 2. 延遲 50 毫秒，等分頁畫面完全切換就位後，再於背景載入其餘清單
-    setTimeout(() => {
-        this.renderMapProgressList(selectedMap);
-        this.renderSetCollection();
-        this.renderDataSearch();
-        this.renderAchievementList();
-    }, 50);
-},
+        // 2. 地圖進度：只有在展開時，才隨定時器即時跳動（380->381、58->59）
+        const mapList = document.getElementById('map-progress-list');
+        if (mapList && !mapList.classList.contains('hidden')) {
+            this.renderMapProgressList(selectedMap);
+        }
+    },
     renderAdventureSummary: function() {
         const title = document.getElementById('adventure-summary-title');
         const box = document.getElementById('adventure-summary');
