@@ -2975,7 +2975,7 @@ const game = {
         target = Math.max(1, Number(target) || 1);
         return { current, target, percent: Math.min(100, Math.floor(current / target * 100)), text: `${Math.min(current, target).toLocaleString()}/${target.toLocaleString()}` };
     },
-   renderAdventureRecords: function(mapId = null) {
+  renderAdventureRecords: function(mapId = null) {
     if (this.adventureRecordRefreshTimer) {
         clearTimeout(this.adventureRecordRefreshTimer);
         this.adventureRecordRefreshTimer = null;
@@ -2985,17 +2985,17 @@ const game = {
     let selectedMap = this.adventureSelectedMap && MAPS[this.adventureSelectedMap] ? this.adventureSelectedMap : (MAPS[this.state.currentMap] ? this.state.currentMap : Object.keys(MAPS)[0]);
     this.adventureSelectedMap = selectedMap;
 
-    // 優先載入頂部摘要
+    // 1. 優先渲染頂部摘要，讓分頁以最快速度呈現在畫面上
     this.renderAdventureSummary();
 
-    // 延後至下一幀載入其餘內容，避免切換分頁時卡頓
-    requestAnimationFrame(() => {
+    // 2. 延遲 50 毫秒，等分頁畫面完全切換就位後，再於背景載入其餘清單
+    setTimeout(() => {
         this.renderMapProgressList(selectedMap);
         this.renderSetCollection();
         this.renderDataSearch();
         this.renderAchievementList();
-    });
-    },
+    }, 50);
+},
     renderAdventureSummary: function() {
         const title = document.getElementById('adventure-summary-title');
         const box = document.getElementById('adventure-summary');
