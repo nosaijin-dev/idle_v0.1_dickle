@@ -346,18 +346,18 @@
         <div id="adventure-summary" class="grid grid-cols-4 gap-3"></div>
     </div>
 
-    <!-- 1. 地圖進度與掉落圖鑑（手風琴折疊） -->
+    <!-- 1. 地圖進度與掉落圖鑑（按鈕緊貼標題） -->
     <div>
-        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
+        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex items-center gap-3">
             <span>地圖進度與掉落圖鑑</span>
             <button class="btn-ui !px-2.5 !py-1 text-xs" onclick="const el=document.getElementById('map-progress-list'); const isHidden=el.classList.toggle('hidden'); this.textContent=isHidden?'展開':'收起'; this.classList.toggle('c-warn', !isHidden);">展開</button>
         </div>
         <div id="map-progress-list" class="space-y-2 hidden"></div>
     </div>
 
-    <!-- 2. 套裝收集（手風琴折疊） -->
+    <!-- 2. 套裝收集（按鈕緊貼 0/7 計數器） -->
     <div>
-        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
+        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex items-center gap-3">
             <div class="flex items-center gap-2">
                 <span>套裝收集</span>
                 <span id="set-collection-count" class="text-sm c-sys font-normal">0/0</span>
@@ -379,9 +379,9 @@
         <div id="record-search-list" class="space-y-2"></div>
     </div>
 
-    <!-- 4. 成就欄（手風琴折疊） -->
+    <!-- 4. 成就欄（按鈕緊貼 6/33 計數器） -->
     <div class="pb-8">
-        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
+        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex items-center gap-3">
             <div class="flex items-center gap-2">
                 <span>成就欄</span>
                 <span id="achievement-count" class="text-sm c-sys font-normal">0/0</span>
