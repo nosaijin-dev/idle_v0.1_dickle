@@ -369,10 +369,11 @@
 
     <!-- 3. 資料查詢 -->
     <div>
-        <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
+         <div class="c-title mb-2 border-b border-gray-800 pb-1 flex justify-between items-center gap-2">
             <span>資料查詢</span><span id="record-search-count" class="text-sm c-sys font-normal">0</span>
         </div>
-        <div class="flex gap-2 mb-2">
+        <!-- 這裡加上了 max-w-md，長度直接減半，且清除按鈕緊隨其後 -->
+        <div class="flex gap-2 mb-2 max-w-md">
             <input id="record-search-input" class="flex-1 min-w-0 bg-black border border-gray-600 text-white py-1 px-2 rounded text-sm" placeholder="搜尋物品、怪物、地圖" oninput="game.renderDataSearch(this.value)">
             <button class="btn-ui !px-2 !py-1 text-xs" onclick="document.getElementById('record-search-input').value=''; game.renderDataSearch('');">清除</button>
         </div>
