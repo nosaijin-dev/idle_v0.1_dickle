@@ -2999,19 +2999,28 @@ const game = {
         // 1. 頂部摘要：隨定時器即時跳動
         this.renderAdventureSummary();
 
-        // 2. 地圖進度：初次載入或展開時，隨定時器即時更新
+        // 2. 地圖進度：若為首次載入（盒子是空的）直接構建；
+        // 若已經展開過，延遲 30 毫秒再在背景刷新數字，把主執行緒讓給分頁秒切換！
         const mapList = document.getElementById('map-progress-list');
-        if (mapList && (!mapList.children.length || !mapList.classList.contains('hidden'))) {
-            this.renderMapProgressList(selectedMap);
+        if (mapList && !mapList.classList.contains('hidden')) {
+            if (!mapList.children.length) {
+                this.renderMapProgressList(selectedMap);
+            } else {
+                setTimeout(() => {
+                    if (this.isRecordsTabOpen() && !mapList.classList.contains('hidden')) {
+                        this.renderMapProgressList(selectedMap);
+                    }
+                }, 30);
+            }
         }
 
-        // 3. 套裝收集：只在第一次進入（盒子為空時）計算出 2/7 並填入，後續定時器絕不重畫
+        // 3. 套裝收集：只在第一次進入時計算出 2/7 並填入，後續定時器絕不重畫
         const setList = document.getElementById('set-collection-list');
         if (setList && !setList.children.length) {
             this.renderSetCollection();
         }
 
-        // 4. 成就欄：只在第一次進入（盒子為空時）計算出 33/33 並填入，後續定時器絕不重畫
+        // 4. 成就欄：只在第一次進入時計算出 33/33 並填入，後續定時器絕不重畫
         const achList = document.getElementById('achievement-list');
         if (achList && !achList.children.length) {
             this.renderAchievementList();
