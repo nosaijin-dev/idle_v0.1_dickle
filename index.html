@@ -3063,7 +3063,77 @@ const game = {
             </div>
         `).join('');
     },
-   renderMapProgressList: function(selectedMap) {
+   toggleMapDropDetail: function(mapId) {
+        this.openedRecordMaps = this.openedRecordMaps || {};
+        this.openedRecordMaps[mapId] = !this.openedRecordMaps[mapId];
+        let isOpen = !!this.openedRecordMaps[mapId];
+
+        // 🎯 局部操作：精準抓取該張地圖的元素，不再整批 20 張地圖砍掉重練！
+        const detailEl = document.getElementById(`map-drop-detail-${mapId}`);
+        const btnEl = document.getElementById(`btn-toggle-drop-${mapId}`);
+        const cardEl = document.getElementById(`map-card-${mapId}`);
+
+        if (btnEl) {
+            btnEl.textContent = isOpen ? '收起' : '掉落查看';
+            btnEl.classList.toggle('c-warn', isOpen);
+            btnEl.classList.toggle('border-yellow-700', isOpen);
+        }
+        if (cardEl) {
+            cardEl.className = `py-2 px-3 transition-all mb-2 ${isOpen ? 'border border-gray-700 bg-gray-900/40 rounded' : 'border-b border-dashed border-gray-800'}`;
+        }
+        if (detailEl) {
+            if (isOpen) {
+                // 打開時，只為「這一張地圖」產生掉落清單
+                detailEl.innerHTML = this.getMapDropDetailHtml(mapId);
+                detailEl.classList.remove('hidden');
+            } else {
+                // 收起時，瞬間隱藏
+                detailEl.classList.add('hidden');
+            }
+        }
+    },
+
+    getMapDropDetailHtml: function(mapId) {
+        let map = MAPS[mapId];
+        if (!map) return '';
+        let stats = this.getMapStats(mapId);
+        let mapDrop = this.getMapDropStats(mapId);
+
+        let monstersHtml = (map.monsters || []).map(monster => {
+            let drops = (monster.drops || []).filter(d => d && ITEMS[d.id] && !this.isRemovedSystemItem(d.id) && !(monster.isBoss && this.isBossTrashDrop(d.id)));
+            let killCount = (stats.monsters || {})[monster.id] || 0;
+            let dropItemsHtml = drops.length ? drops.map(d => {
+                let got = this.hasObtainedItem(d.id);
+                let def = ITEMS[d.id];
+                return `<span id="drop-check-${mapId}-${d.id}" class="${got ? 'c-success' : 'c-sys'} text-xs mr-2 inline-block my-0.5" title="掉落率 ${d.rate || 0}%">${got ? '✓' : '□'} ${def.name}</span>`;
+            }).join('') : '<span class="c-sys text-xs">無特殊掉落</span>';
+
+            return `
+                <div class="py-2 px-2 border-b border-dashed border-gray-800/80 last:border-0">
+                    <div class="flex justify-between items-center gap-2">
+                        <span class="${monster.isBoss ? 'c-err' : 'c-item'} font-bold text-sm">${monster.name}</span>
+                        <span id="monster-kills-${mapId}-${monster.id}" class="c-sys text-xs">擊敗 ${killCount.toLocaleString()}</span>
+                    </div>
+                    <div class="mt-1 leading-relaxed">${dropItemsHtml}</div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="bg-gray-900 border border-gray-800 rounded p-2 mb-3">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="c-sys font-bold">${map.name} 掉落達成度</span>
+                    <span id="map-drop-rate-${mapId}" class="c-warn font-semibold">${mapDrop.obtained}/${mapDrop.total} (${mapDrop.percent}%)</span>
+                </div>
+                <div class="bar-container mt-1.5 h-2.5"><div id="map-drop-bar-${mapId}" class="bar-fill mp" style="width:${mapDrop.percent}%;"></div></div>
+            </div>
+            <div class="space-y-1">
+                ${monstersHtml || '<div class="c-sys text-xs italic">此地圖尚無怪物資料</div>'}
+            </div>
+        `;
+    },
+
+    renderMapProgressList: function(selectedMap) {
         const list = document.getElementById('map-progress-list');
         if (!list) return;
         this.openedRecordMaps = this.openedRecordMaps || {};
@@ -3103,10 +3173,9 @@ const game = {
             return;
         }
 
-        // 🎯 2. 定時更新時：只更新「當前戰鬥地圖」與「展開中的地圖」，其餘 19 張完全不浪費算力！
+        // 2. 定時更新時：只更新「當前戰鬥地圖」與「展開中的地圖」，其餘 19 張完全不浪費算力！
         let currentMap = this.state.currentMap;
         let activeMaps = new Set([currentMap]);
-        // 如果玩家剛好展開了某張地圖的掉落查看，也一併加入更新名單
         Object.keys(this.openedRecordMaps).forEach(id => {
             if (this.openedRecordMaps[id]) activeMaps.add(id);
         });
@@ -3118,7 +3187,7 @@ const game = {
             let drop = this.getMapDropStats(mapId);
             let percent = this.getMapProgressPercent(mapId);
 
-            // 原地更新當前地圖的擊殺文字（380 -> 381）
+            // 原地更新擊殺文字（380 -> 381）
             let statEl = document.getElementById(`map-stat-text-${mapId}`);
             if (statEl) {
                 let text = `擊殺 ${stats.kills.toLocaleString()}/${this.getMapKillTarget(mapId).toLocaleString()} / 掉落 ${drop.obtained}/${drop.total}`;
