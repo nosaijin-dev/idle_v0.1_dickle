@@ -2626,10 +2626,18 @@ const game = {
         if (!el) return;
         let color = 'c-sys';
         if (type === 'danger') color = 'c-err'; else if (type === 'hit') color = 'c-info'; else if (type === 'success') color = 'c-success'; else if (type === 'magic') color = 'c-magic'; else if (type === 'skill-elf') color = 'c-skill-elf'; else if (type === 'skill-dark') color = 'c-skill-dark'; else if (type === 'skill-knight') color = 'c-skill-knight'; else if (type === 'skill-wizard') color = 'c-skill-wizard'; 
-        const shouldStick = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
+
+        // 1. 塞入新日誌並維持 40 行上限
         el.insertAdjacentHTML('beforeend', `<div class="${color}">> ${msg}</div>`);
         while(el.children.length > 40) el.firstChild.remove();
-        if (shouldStick) el.scrollTop = el.scrollHeight;
+
+        // 🎯 2. 打包滾動：不管一秒跳幾十行，都在下一幀順暢平滑滾動，不再每一箭都強制卡頓排版！
+        if (!this.logScrollTimer) {
+            this.logScrollTimer = requestAnimationFrame(() => {
+                this.logScrollTimer = null;
+                el.scrollTop = el.scrollHeight;
+            });
+        }
     },
     logSystem: function(msg, type='normal') {
         const el = document.getElementById('system-log');
