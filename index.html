@@ -2957,6 +2957,11 @@ const game = {
         this.renderShopPrices();
     },
     checkAchievements: function() {
+        // 🎯 節流保護：每 800 毫秒（0.8 秒）最多檢查一次，避免秒殺怪時頻繁卡頓
+        let now = Date.now();
+        if (this.lastAchievementCheckTime && now - this.lastAchievementCheckTime < 800) return;
+        this.lastAchievementCheckTime = now;
+
         this.ensureAdventureState();
         if (this.achievementCheckBusy) return;
         this.achievementCheckBusy = true;
