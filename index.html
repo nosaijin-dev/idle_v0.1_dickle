@@ -3118,14 +3118,15 @@ const game = {
             let dropItemsHtml = drops.length ? drops.map(d => {
                 let got = this.hasObtainedItem(d.id);
                 let def = ITEMS[d.id];
-                return `<span class="${got ? 'c-success' : 'c-sys'} text-xs mr-2 inline-block my-0.5" title="掉落率 ${d.rate || 0}%">${got ? '✓' : '□'} ${def.name}</span>`;
+                return `<span id="drop-check-${mapId}-${d.id}" class="${got ? 'c-success' : 'c-sys'} text-xs mr-2 inline-block my-0.5" title="掉落率 ${d.rate || 0}%">${got ? '✓' : '□'} ${def.name}</span>`;
             }).join('') : '<span class="c-sys text-xs">無特殊掉落</span>';
 
             return `
                 <div class="py-2 px-2 border-b border-dashed border-gray-800/80 last:border-0">
                     <div class="flex justify-between items-center gap-2">
                         <span class="${monster.isBoss ? 'c-err' : 'c-item'} font-bold text-sm">${monster.name}</span>
-                        <span class="c-sys text-xs">擊敗 ${killCount.toLocaleString()}</span>
+                        <!-- 加上專屬 ID，方便原地秒改數字，不需重畫整張卡片 -->
+                        <span id="monster-kills-${mapId}-${monster.id}" class="c-sys text-xs">擊敗 ${killCount.toLocaleString()}</span>
                     </div>
                     <div class="mt-1 leading-relaxed">${dropItemsHtml}</div>
                 </div>
@@ -3136,9 +3137,9 @@ const game = {
             <div class="bg-gray-900 border border-gray-800 rounded p-2 mb-3">
                 <div class="flex justify-between items-center text-xs">
                     <span class="c-sys font-bold">${map.name} 掉落達成度</span>
-                    <span class="c-warn font-semibold">${mapDrop.obtained}/${mapDrop.total} (${mapDrop.percent}%)</span>
+                    <span id="map-drop-rate-${mapId}" class="c-warn font-semibold">${mapDrop.obtained}/${mapDrop.total} (${mapDrop.percent}%)</span>
                 </div>
-                <div class="bar-container mt-1.5 h-2.5"><div class="bar-fill mp" style="width:${mapDrop.percent}%;"></div></div>
+                <div class="bar-container mt-1.5 h-2.5"><div id="map-drop-bar-${mapId}" class="bar-fill mp" style="width:${mapDrop.percent}%;"></div></div>
             </div>
             <div class="space-y-1">
                 ${monstersHtml || '<div class="c-sys text-xs italic">此地圖尚無怪物資料</div>'}
@@ -3150,34 +3151,81 @@ const game = {
         const list = document.getElementById('map-progress-list');
         if (!list) return;
         this.openedRecordMaps = this.openedRecordMaps || {};
-        list.innerHTML = '';
+
+        // 🎯 1. 只有在盒子還是空的時候，才整批構建 HTML（一生只做一次）
+        if (!list.children.length) {
+            let html = '';
+            this.getAdventureMapOrder().forEach(mapId => {
+                let map = MAPS[mapId];
+                if (!map) return;
+                let stats = this.getMapStats(mapId);
+                let drop = this.getMapDropStats(mapId);
+                let percent = this.getMapProgressPercent(mapId);
+                let isOpen = !!this.openedRecordMaps[mapId];
+                let selectedClass = isOpen ? 'border border-gray-700 bg-gray-900/40 rounded' : 'border-b border-dashed border-gray-800';
+
+                html += `
+                    <div id="map-card-${mapId}" class="py-2 px-3 ${selectedClass} transition-all mb-2">
+                        <div class="flex justify-between items-center gap-2">
+                            <div class="min-w-0">
+                                <div class="c-item font-bold text-base">${map.name}</div>
+                                <div id="map-stat-text-${mapId}" class="text-xs c-sys">擊殺 ${stats.kills.toLocaleString()}/${this.getMapKillTarget(mapId).toLocaleString()} / 掉落 ${drop.obtained}/${drop.total}</div>
+                            </div>
+                            <button id="btn-toggle-drop-${mapId}" class="btn-ui !px-2.5 !py-1 text-xs ${isOpen ? 'c-warn border-yellow-700' : ''}" onclick="game.toggleMapDropDetail('${mapId}')">
+                                ${isOpen ? '收起' : '掉落查看'}
+                            </button>
+                        </div>
+                        <div class="bar-container mt-2 h-3"><div id="map-bar-${mapId}" class="bar-fill exp" style="width:${percent}%;"></div></div>
+                        <div id="map-percent-${mapId}" class="text-right text-xs c-warn mt-1">${percent}%</div>
+                        <div id="map-drop-detail-${mapId}" class="mt-3 pt-3 border-t border-gray-800 bg-black/60 rounded p-3 ${isOpen ? '' : 'hidden'}">
+                            ${isOpen ? this.getMapDropDetailHtml(mapId) : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+            return;
+        }
+
+        // 🎯 2. 如果卡片早就蓋好了，絕對不再砍掉重練！只原地更新變動的文字與進度條（耗時 0.1ms）
         this.getAdventureMapOrder().forEach(mapId => {
-            let map = MAPS[mapId];
-            if (!map) return;
             let stats = this.getMapStats(mapId);
             let drop = this.getMapDropStats(mapId);
             let percent = this.getMapProgressPercent(mapId);
-            let isOpen = !!this.openedRecordMaps[mapId];
-            let selectedClass = isOpen ? 'border border-gray-700 bg-gray-900/40 rounded' : 'border-b border-dashed border-gray-800';
 
-            list.insertAdjacentHTML('beforeend', `
-                <div id="map-card-${mapId}" class="py-2 px-3 ${selectedClass} transition-all mb-2">
-                    <div class="flex justify-between items-center gap-2">
-                        <div class="min-w-0">
-                            <div class="c-item font-bold text-base">${map.name}</div>
-                            <div class="text-xs c-sys">擊殺 ${stats.kills.toLocaleString()}/${this.getMapKillTarget(mapId).toLocaleString()} / 掉落 ${drop.obtained}/${drop.total}</div>
-                        </div>
-                        <button id="btn-toggle-drop-${mapId}" class="btn-ui !px-2.5 !py-1 text-xs ${isOpen ? 'c-warn border-yellow-700' : ''}" onclick="game.toggleMapDropDetail('${mapId}')">
-                            ${isOpen ? '收起' : '掉落查看'}
-                        </button>
-                    </div>
-                    <div class="bar-container mt-2 h-3"><div class="bar-fill exp" style="width:${percent}%;"></div></div>
-                    <div class="text-right text-xs c-warn mt-1">${percent}%</div>
-                    <div id="map-drop-detail-${mapId}" class="mt-3 pt-3 border-t border-gray-800 bg-black/60 rounded p-3 ${isOpen ? '' : 'hidden'}">
-                        ${isOpen ? this.getMapDropDetailHtml(mapId) : ''}
-                    </div>
-                </div>
-            `);
+            // 原地更新擊殺文字（380 -> 381）
+            let statEl = document.getElementById(`map-stat-text-${mapId}`);
+            if (statEl) {
+                let text = `擊殺 ${stats.kills.toLocaleString()}/${this.getMapKillTarget(mapId).toLocaleString()} / 掉落 ${drop.obtained}/${drop.total}`;
+                if (statEl.textContent !== text) statEl.textContent = text;
+            }
+
+            // 原地更新進度條
+            let barEl = document.getElementById(`map-bar-${mapId}`);
+            if (barEl && barEl.style.width !== `${percent}%`) {
+                barEl.style.width = `${percent}%`;
+            }
+
+            // 原地更新百分比
+            let percentEl = document.getElementById(`map-percent-${mapId}`);
+            if (percentEl && percentEl.textContent !== `${percent}%`) {
+                percentEl.textContent = `${percent}%`;
+            }
+
+            // 如果該地圖的「掉落查看」打開著，只原地更新怪物擊殺數（58 -> 59）
+            if (this.openedRecordMaps[mapId]) {
+                let map = MAPS[mapId];
+                if (map && map.monsters) {
+                    map.monsters.forEach(m => {
+                        let kCount = (stats.monsters || {})[m.id] || 0;
+                        let kEl = document.getElementById(`monster-kills-${mapId}-${m.id}`);
+                        if (kEl) {
+                            let kText = `擊敗 ${kCount.toLocaleString()}`;
+                            if (kEl.textContent !== kText) kEl.textContent = kText;
+                        }
+                    });
+                }
+            }
         });
     },
     getSetCollectionDefinitions: function() {
