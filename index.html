@@ -2804,12 +2804,18 @@ const game = {
         Object.values(this.state.inventory || {}).forEach(item => { max = Math.max(max, Number(item.enchant) || 0); });
         return max;
     },
-    getAdventureMapOrder: function() {
+   getAdventureMapOrder: function() {
         return Object.keys(MAPS).sort((a, b) => {
             let pa = this.getMapProgressPercent(a);
             let pb = this.getMapProgressPercent(b);
+
+            // 1. 第一優先：完成度不同的話，完成度高的排在前面（保留原版效果）
             if (pa !== pb) return pb - pa;
-            return MAPS[a].name.localeCompare(MAPS[b].name, 'zh-TW');
+
+            // 2. 第二優先：完成度相同時（例如傲慢之塔全都 100%），啟用自然數字排序，讓 1~10 樓依序排列！
+            let nameA = (MAPS[a] && MAPS[a].name) || '';
+            let nameB = (MAPS[b] && MAPS[b].name) || '';
+            return nameA.localeCompare(nameB, 'zh-TW', { numeric: true });
         });
     },
     getMapDropItemIds: function(mapId) {
