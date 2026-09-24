@@ -6451,6 +6451,9 @@ const game = {
         // 🎯 通用登場廣播：只要怪獸身分證裡有設定 spawnMsg，出生時立刻在左下角發布警報紅字！
         if (selected && selected.spawnMsg) {
             this.logSystem(selected.spawnMsg, 'danger');
+            // 🎯 設定 3 秒對峙冷卻（3000 毫秒）
+            this.state.combatPauseUntil = Date.now() + 3000;
+            this.logCombat(`【對峙】強大的肅殺之氣籠罩在你與目標之間，戰鬥將在 3 秒後爆發！`, 'warn');
         }
         
         this.state.targetMonster = { ...selected, maxHp: selected.hp, debuffs: {} };
