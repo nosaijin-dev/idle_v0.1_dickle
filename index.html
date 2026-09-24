@@ -6442,10 +6442,15 @@ const game = {
             selected = map.monsters.find(m => m.id === 'hv_cursed_aruba') || selected;
             this.state.hiddenValleyArubaSummoned = true;
             this.logSystem('隱藏之谷深處傳來詛咒的氣息，受詛咒的阿魯巴現身了！', 'danger');
-        } else {
+       } else {
             let totalW = map.monsters.reduce((s, m) => s + m.weight, 0);
             let r = Math.random() * totalW;
             for(let m of map.monsters) { if(r < m.weight) { selected = m; break; } r -= m.weight; }
+        }
+
+        // 🎯 通用登場廣播：只要怪獸身分證裡有設定 spawnMsg，出生時立刻在左下角發布警報紅字！
+        if (selected && selected.spawnMsg) {
+            this.logSystem(selected.spawnMsg, 'danger');
         }
         
         this.state.targetMonster = { ...selected, maxHp: selected.hp, debuffs: {} };
