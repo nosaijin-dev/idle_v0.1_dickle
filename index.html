@@ -6449,11 +6449,16 @@ const game = {
         }
 
         // 🎯 通用登場廣播：只要怪獸身分證裡有設定 spawnMsg，出生時立刻在左下角發布警報紅字！
-        if (selected && selected.spawnMsg) {
+       if (selected && selected.spawnMsg) {
             this.logSystem(selected.spawnMsg, 'danger');
-            // 🎯 設定 3 秒對峙冷卻（3000 毫秒）
-            this.state.combatPauseUntil = Date.now() + 3000;
-            this.logCombat(`【對峙】強大的肅殺之氣籠罩在你與目標之間，戰鬥將在 3 秒後爆發！`, 'warn');
+            
+            // 🎯 對峙秒數（若怪獸有設定 standoffDuration 就用設定的，沒設定預設 3000 毫秒）
+            let delay = selected.standoffDuration || 3000;
+            this.state.combatPauseUntil = Date.now() + delay;
+            
+            // 🎯 個別專屬對峙訊息（若怪獸有設定 standoffMsg 就播放專屬的，沒有就用通用版）
+            let standoffText = selected.standoffMsg || `【對峙】凝重的肅殺之氣瀰漫在你與強敵之間，戰鬥將在 ${Math.round(delay/1000)} 秒後爆發！`;
+            this.logCombat(standoffText, 'warn');
         }
         
         this.state.targetMonster = { ...selected, maxHp: selected.hp, debuffs: {} };
