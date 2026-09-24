@@ -350,7 +350,7 @@
     <div>
         <div class="c-title mb-2 border-b border-gray-800 pb-1 flex items-center gap-3">
            <span>地圖進度與掉落圖鑑</span>
-            <button class="btn-ui !px-2.5 !py-1 text-xs" onclick="const el=document.getElementById('map-progress-list'); const isHidden=el.classList.toggle('hidden'); this.textContent=isHidden?'展開':'收起'; this.classList.toggle('c-warn', !isHidden); if(!isHidden && !el.children.length) game.renderMapProgressList();">展開</button>
+            <button class="btn-ui !px-2.5 !py-1 text-xs" onclick="const el=document.getElementById('map-progress-list'); const isHidden=el.classList.toggle('hidden'); this.textContent=isHidden?'展開':'收起'; this.classList.toggle('c-warn', !isHidden); if(!isHidden){ el.innerHTML=''; game.renderMapProgressList(); }">展開</button>
             <span class="text-xs c-sys font-normal">(按地圖完成度排序，完成度相同時按地圖名稱筆畫排序)</span>
         </div>
         <div id="map-progress-list" class="space-y-2 hidden"></div>
