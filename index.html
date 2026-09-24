@@ -6502,6 +6502,9 @@ const game = {
         document.getElementById('target-hp-bar').style.width = `${Math.max(0, (this.state.targetMonster.hp/this.state.targetMonster.maxHp)*100)}%`;
     },
     playerAttack: function() {
+        // 🎯 時間沒到，主角不出手
+        if (this.state.combatPauseUntil && Date.now() < this.state.combatPauseUntil) return;
+
         if(!this.state.targetMonster || this.state.hp <= 0 || (this.state.buffs.petrified > 0) || (this.state.buffs.stun > 0)) return;
         
         let dmg = 0, isHit = false, isGraze = false;
@@ -6958,7 +6961,9 @@ const game = {
         else this.renderPets();
         return true;
     },
-    monsterAttack: function() {
+   monsterAttack: function() {
+        // 🎯 時間沒到，BOSS 也不出手
+        if (this.state.combatPauseUntil && Date.now() < this.state.combatPauseUntil) return;
         if(!this.state.targetMonster || this.state.hp <= 0) return;
         const monsterTarget = this.chooseMonsterTarget();
         
