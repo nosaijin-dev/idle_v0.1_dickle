@@ -2814,14 +2814,22 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         return max;
     },
    getAdventureMapOrder: function() {
-        return Object.keys(MAPS).sort((a, b) => {
-            let pa = this.getMapProgressPercent(a);
-            let pb = this.getMapProgressPercent(b);
+        // 🎯 效能優化：先把所有地圖的進度算好存入快取，每張地圖只算 1 次，不再重複計算上百次！
+        const percents = {};
+        const mapKeys = Object.keys(MAPS);
+        for (let i = 0; i < mapKeys.length; i++) {
+            percents[mapKeys[i]] = this.getMapProgressPercent(mapKeys[i]);
+        }
 
-            // 1. 第一優先：完成度不同的話，完成度高的排在前面（保留原版效果）
+        // 拿著算好的數字直接快速排序，毫秒級完成！
+        return mapKeys.sort((a, b) => {
+            let pa = percents[a];
+            let pb = percents[b];
+
+            // 1. 完成度高排前面
             if (pa !== pb) return pb - pa;
 
-            // 2. 第二優先：完成度相同時（例如傲慢之塔全都 100%），啟用自然數字排序，讓 1~10 樓依序排列！
+            // 2. 完成度相同時，依自然數字由小到大排
             let nameA = (MAPS[a] && MAPS[a].name) || '';
             let nameB = (MAPS[b] && MAPS[b].name) || '';
             return nameA.localeCompare(nameB, 'zh-TW', { numeric: true });
