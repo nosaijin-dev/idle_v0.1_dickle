@@ -3925,6 +3925,8 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (!silent) this.renderPets();
     },
     petAct: function() {
+        // 🎯 對峙期間，寵物按兵不動
+        if (this.state.combatPauseUntil && Date.now() < this.state.combatPauseUntil) return;
         const active = this.getActivePetData();
         if (!active || !this.state.targetMonster || this.state.hp <= 0 || !this.isPetAlive(this.state.activePet)) return;
         const def = active.def;
