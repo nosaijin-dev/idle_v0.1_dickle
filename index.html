@@ -8116,9 +8116,10 @@ if(Math.random()*100 <= this.getER()) {
             this.state.battleLoop = setTimeout(playerLoopFn, speed);
         };
 
-        const magicLoopFn = () => {
+       const magicLoopFn = () => {
             if(!this.state.isPlaying || this.state.hp <= 0) return;
-            if(this.state.targetMonster && !(this.state.buffs.petrified > 0) && !(this.state.buffs.stun > 0)) this.playerMagicAttack();
+            const isPaused = this.state.combatPauseUntil && Date.now() < this.state.combatPauseUntil;
+            if(!isPaused && this.state.targetMonster && !(this.state.buffs.petrified > 0) && !(this.state.buffs.stun > 0)) this.playerMagicAttack();
             this.state.magicLoop = setTimeout(magicLoopFn, 3000);
         };
 
