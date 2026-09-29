@@ -1245,8 +1245,9 @@ const MAPS = {
 };
 
 Object.assign(ITEMS, {
-    sword_red_knight: { name: '紅騎士之劍', type: 'weapon', hands: 1, speed: 950, safe: 6, dice: '1d9', hit: 1, dropRate: 0.2, desc: '騎士任務獎勵改為掉落。' , classes: ['knight'] },
-    shield_red_knight: { name: '紅騎士盾牌', type: 'shield', safe: 4, ac: -2, dropRate: 0.2, desc: '騎士任務獎勵改為掉落。' },
+    shield_red_knight: { name: '紅騎士盾牌', type: 'shield', safe: 4, ac: -2, dropRate: 0.2, classes: ['knight'],desc: '有著紅騎士團徽記的厚實盾牌，象徵騎士通過試煉後獲得的榮譽。' },
+    sword_red_knight: { name: '紅騎士之劍', type: 'weapon', hands: 1, speed: 950, safe: 6, dice: '1d9', hit: 1, str: 1, dropRate: 0.2, classes: ['knight'], desc: '銘刻著紅騎士團誓言的長劍，象徵騎士通過試煉後獲得的榮譽。' },
+    Turban_red_knight: { name: '紅騎士頭巾', type: 'helmet', safe: 6, ac: -1, mr: 3, hp: 20, dropRate: 0.2, classes: ['knight'], desc: '深紅色的騎士頭巾，象徵著紅騎士團的勇氣與團結精神。' },
     sword_silver_long: { name: '銀長劍', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d8', hit: 1, isUndeadSlayer: true, dropRate: 0.4 },
     sword_mail_breaker: { name: '破甲之劍', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d12', hit: 2, dropRate: 0.08, legendary: true , classes: ['knight'] },
     sword_silence: { name: '沉默之劍', type: 'weapon', hands: 1, speed: 1000, safe: 6, dice: '1d11', hit: 1, dropRate: 0.08, legendary: true , classes: ['knight'] },
