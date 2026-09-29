@@ -4794,7 +4794,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         
         let html = '';
         let typeName = '';
-        if(def.type === 'weapon') typeName = '武器';
+        if(def.type === 'weapon') typeName = def.hands === 2 ? '雙手武器' : '單手武器';
         else if(def.type === 'helmet') typeName = '頭盔';
         else if(def.type === 'armor') typeName = '盔甲';
         else if(def.type === 'shield') typeName = '盾牌';
