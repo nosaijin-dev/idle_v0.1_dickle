@@ -9352,7 +9352,9 @@ Object.assign(game, {
         for (const id of buffs) if (this.doesCompanionNeedBuff(c, id) && this.companionCastSpell(c, id, 'support')) return true;
         return this.companionPhysicalAttack(c);
     },
-    companionAct: function() {
+   companionAct: function() {
+        // 🎯 對峙期間，隊友按兵不動！
+        if (this.state.combatPauseUntil && Date.now() < this.state.combatPauseUntil) return;
         let c = this.getActiveCompanion();
         if (!c || !this.state.targetMonster || this.state.hp <= 0) return;
         this.normalizeCompanionVitals(c);
