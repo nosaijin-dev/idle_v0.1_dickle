@@ -6665,7 +6665,6 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             if (wpn && wpn.itemId === 'sword_black_captain' && Math.random() < 0.03) {
                 let sp = SPELLS['earth_captain'] || SPELLS['earth'];
                 if (sp) {
-                    // 🧠 智力加成：智力超過 10 的部分，每 1 點智力額外增加 2 點地裂傷害！
                     let currentInt = this.getInt ? this.getInt() : (this.state.stats?.int || 10);
                     let intBonus = Math.max(0, currentInt - 10) * 2;
 
@@ -6675,6 +6674,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     this.logCombat(`精銳黑騎士隊長之劍發動了 地裂術，造成 ${finalDmg} 點傷害。`, 'magic');
                     this.state.targetMonster.hp -= finalDmg;
                 }
+            }
         } else this.logCombat(weaponClass === 'bow' ? `你的箭矢被 ${this.state.targetMonster.name} 閃過。` : `你的攻擊未命中 ${this.state.targetMonster.name}。`);
 
         if(isHit || isGraze) {
