@@ -3329,6 +3329,15 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 ]
             },
             {
+                name: '紅騎士套裝',
+                bonus: 'AC -3 / HP +50 / DR +2 / 近戰傷害 +2',
+                parts: [
+                { id: 'sword_red_knight', slots: ['weapon'] },
+                { id: 'shield_red_knight', slots: ['shield'] },
+                { id: 'bandana_red_knight', slots: ['helmet'] }
+            ]
+        },
+            {
                 name: '冰之女王套裝',
                 bonus: 'AC -2 / MR +10 / 魔法傷害 +2 / MP恢復 +3',
                 parts: [
@@ -4302,6 +4311,9 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if(eq.helmet === 'helm_skeleton' && eq.armor === 'armor_skeleton' && eq.shield === 'shield_skeleton') {
             sets.active.push('骷髏套裝'); sets.ac += 2; sets.hp += 10;
         }
+        if(eq.weapon === 'sword_red_knight' && eq.shield === 'shield_red_knight' && eq.helmet === 'bandana_red_knight') {
+            sets.active.push('紅騎士套裝'); sets.ac += 3; sets.hp += 50; sets.dr += 2; sets.dmg += 2;
+        }
         if((eq.earring1 === 'ice_queen_earring' || eq.earring2 === 'ice_queen_earring') && eq.weapon === 'ice_queen_staff') {
             sets.active.push('冰之女王套裝'); sets.ac += 2; sets.mr += 10; sets.mDmg += 2; sets.mpRegen += 3;
         }
@@ -4934,6 +4946,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (sets.active.includes('侏儒套裝')) ['helmet', 'cloak', 'shield'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
         if (sets.active.includes('歐西斯套裝')) ['helmet', 'cloak', 'armor', 'shield'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
         if (sets.active.includes('骷髏套裝')) ['helmet', 'armor', 'shield'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
+        if (sets.active.includes('紅騎士套裝')) ['weapon', 'shield', 'helmet'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
         if (sets.active.includes('冰之女王套裝')) ['weapon', 'earring1', 'earring2'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
         if (sets.active.includes('影子套裝')) ['cloak', 'armor'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
         if (sets.active.includes('影子疾行套裝')) ['gloves', 'boots'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
