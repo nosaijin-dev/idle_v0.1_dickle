@@ -3150,6 +3150,11 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     }
                     if (def.ac !== undefined && def.ac !== 0) baseInfo.push(`防禦力: ${def.ac}`);
                     if (def.safe !== undefined) baseInfo.push(`安定值: ${def.safe}`);
+                    // 🛡️ 補上大小姐欽點的職業限制！
+                    if (def.classes && def.classes.length) {
+                        const classMap = { knight: '騎士', prince: '王族', elf: '妖精', wizard: '法師', dark_elf: '黑妖' };
+                        baseInfo.push(`職業: ${def.classes.map(c => classMap[c] || c).join('/')}`);
+                    }
                     if (baseInfo.length) lines.push(baseInfo.join(' | '));
 
                     let bonusInfo = [];
