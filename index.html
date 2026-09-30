@@ -3541,7 +3541,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             return this.renderDataSearchMapResult(result);
         }).join('');
     },
-    renderDataSearchItemResult: function(result) {
+   renderDataSearchItemResult: function(result) {
         let def = result.def;
         let item = { itemId: result.itemId, enchant: 0, count: 1, isBlessed: false };
         let got = this.hasObtainedItem(result.itemId);
@@ -3550,6 +3550,38 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         let classLabel = this.getItemClassLabel(def);
         let spell = def.spellId ? SPELLS[def.spellId] : null;
         let meta = [type, classLabel, spell?.name ? `技能：${spell.name}` : ''].filter(Boolean).map(v => this.escapeHtml(v)).join(' / ');
+
+        // 🎯 1. 解析裝備基本攻防與手數
+        let statParts = [];
+        if (def.type === 'weapon') {
+            let maxAtk = def.dice ? def.dice.split('+')[0].split('d').pop() : '';
+            if (maxAtk) statParts.push(`攻擊力: ${maxAtk}`);
+            if (def.hands) statParts.push(def.hands === 2 ? '雙手' : '單手');
+        }
+        if (def.ac !== undefined && def.ac !== 0) statParts.push(`防禦力: ${def.ac}`);
+        if (def.safe !== undefined) statParts.push(`安定值: ${def.safe}`);
+
+        // 🎯 2. 解析所有額外屬性加成
+        let bonusParts = [];
+        if (def.hit) bonusParts.push(`命中+${def.hit}`);
+        if (def.dmg) bonusParts.push(`傷害+${def.dmg}`);
+        if (def.mDmg) bonusParts.push(`魔傷+${def.mDmg}`);
+        if (def.str) bonusParts.push(`力量+${def.str}`);
+        if (def.dex) bonusParts.push(`敏捷+${def.dex}`);
+        if (def.con) bonusParts.push(`體質+${def.con}`);
+        if (def.int) bonusParts.push(`智力+${def.int}`);
+        if (def.wis) bonusParts.push(`精神+${def.wis}`);
+        if (def.mr) bonusParts.push(`魔防+${def.mr}%`);
+        if (def.hp) bonusParts.push(`HP+${def.hp}`);
+        if (def.mp) bonusParts.push(`MP+${def.mp}`);
+        if (def.hpRegen) bonusParts.push(`回血+${def.hpRegen}`);
+        if (def.mpRegen) bonusParts.push(`回魔+${def.mpRegen}`);
+
+        let allStats = [...statParts, ...bonusParts];
+        let statHtml = allStats.length ? `<div class="text-xs text-gray-300 mt-1">${allStats.map(s => this.escapeHtml(s)).join(' | ')}</div>` : '';
+        let descHtml = def.desc ? `<div class="text-xs c-warn mt-1 leading-relaxed">${this.escapeHtml(def.desc)}</div>` : '';
+
+        // 🎯 3. 下方的怪物掉落來源
         let sources = result.sources || [];
         let sourceHtml = sources.length ? sources.slice(0, 10).map(source => {
             let rateText = this.formatDropRate(source.rate);
@@ -3562,6 +3594,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             `;
         }).join('') : '<div class="text-xs c-sys mt-2">未列於怪物掉落</div>';
         if (sources.length > 10) sourceHtml += `<div class="text-xs c-sys mt-1">另 ${sources.length - 10} 筆來源</div>`;
+
         return `
             <div class="border border-gray-800 bg-gray-900 rounded p-3">
                 <div class="flex justify-between gap-2">
@@ -3569,6 +3602,8 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     <span class="text-xs c-sys whitespace-nowrap">${sources.length ? sources.length + '來源' : '非掉落'}</span>
                 </div>
                 <div class="text-xs c-sys mt-1">${meta}</div>
+                ${statHtml}
+                ${descHtml}
                 <div class="mt-2">${sourceHtml}</div>
             </div>
         `;
