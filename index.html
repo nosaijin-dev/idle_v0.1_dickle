@@ -3578,8 +3578,17 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (def.mpRegen) bonusParts.push(`回魔+${def.mpRegen}`);
 
         let allStats = [...statParts, ...bonusParts];
-        let statHtml = allStats.length ? `<div class="text-xs text-gray-300 mt-1">${allStats.map(s => this.escapeHtml(s)).join(' | ')}</div>` : '';
-        let descHtml = def.desc ? `<div class="text-xs c-warn mt-1 leading-relaxed">${this.escapeHtml(def.desc)}</div>` : '';
+        let statHtml = allStats.length ? `<div class="text-xs text-gray-300">${allStats.map(s => this.escapeHtml(s)).join(' | ')}</div>` : '';
+        let descHtml = def.desc ? `<div class="text-xs c-warn leading-relaxed">${this.escapeHtml(def.desc)}</div>` : '';
+
+        // 📦 🎯 專屬「裝備資訊內嵌小框」：將屬性與故事獨立框住，與下方掉落來源徹底區隔
+        let infoBoxHtml = `
+            <div class="bg-black/50 border border-gray-800/80 rounded p-2.5 my-2 space-y-1">
+                ${meta ? `<div class="text-xs c-sys">${meta}</div>` : ''}
+                ${statHtml}
+                ${descHtml}
+            </div>
+        `;
 
         // 🎯 3. 下方的怪物掉落來源
         let sources = result.sources || [];
@@ -3601,9 +3610,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     <span class="${color} font-bold min-w-0">${got ? '✓' : '□'} ${this.escapeHtml(def.name)}</span>
                     <span class="text-xs c-sys whitespace-nowrap">${sources.length ? sources.length + '來源' : '非掉落'}</span>
                 </div>
-                <div class="text-xs c-sys mt-1">${meta}</div>
-                ${statHtml}
-                ${descHtml}
+                ${infoBoxHtml}
                 <div class="mt-2">${sourceHtml}</div>
             </div>
         `;
