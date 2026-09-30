@@ -3157,20 +3157,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     }
                     if (baseInfo.length) lines.push(baseInfo.join(' | '));
 
-                    let bonusInfo = [];
-                    if (def.hit) bonusInfo.push(`額外命中: +${def.hit}`);
-                    if (def.dmg) bonusInfo.push(`額外傷害: +${def.dmg}`);
-                    if (def.mDmg) bonusInfo.push(`魔法額外傷害: +${def.mDmg}`);
-                    if (def.str) bonusInfo.push(`力量: +${def.str}`);
-                    if (def.dex) bonusInfo.push(`敏捷: +${def.dex}`);
-                    if (def.con) bonusInfo.push(`體質: +${def.con}`);
-                    if (def.int) bonusInfo.push(`智力: +${def.int}`);
-                    if (def.wis) bonusInfo.push(`精神: +${def.wis}`);
-                    if (def.mr) bonusInfo.push(`魔防: +${def.mr}%`);
-                    if (def.hp) bonusInfo.push(`最大 HP: +${def.hp}`);
-                    if (def.mp) bonusInfo.push(`最大 MP: +${def.mp}`);
-                    if (def.hpRegen) bonusInfo.push(`體力恢復: +${def.hpRegen}`);
-                    if (def.mpRegen) bonusInfo.push(`魔力恢復: +${def.mpRegen}`);
+                    let bonusInfo = this.formatItemBonuses(def);
                     if (bonusInfo.length) lines.push(bonusInfo.join(' | '));
                 }
                 if (def.desc) lines.push(def.desc);
@@ -3541,7 +3528,46 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             return this.renderDataSearchMapResult(result);
         }).join('');
     },
-   renderDataSearchItemResult: function(result) {
+   // 🎯 全域通用裝備屬性解析字典表（未來新增火抗、風抗、減免等，自動解析顯示！）
+    formatItemBonuses: function(def) {
+        if (!def) return [];
+        const config = [
+            { key: 'hit', label: '命中', prefix: '+' },
+            { key: 'dmg', label: '傷害', prefix: '+' },
+            { key: 'mDmg', label: '魔傷', prefix: '+' },
+            { key: 'str', label: '力量', prefix: '+' },
+            { key: 'dex', label: '敏捷', prefix: '+' },
+            { key: 'con', label: '體質', prefix: '+' },
+            { key: 'int', label: '智力', prefix: '+' },
+            { key: 'wis', label: '精神', prefix: '+' },
+            { key: 'mr', label: '魔防', prefix: '+', suffix: '%' },
+            { key: 'hp', label: 'HP', prefix: '+' },
+            { key: 'mp', label: 'MP', prefix: '+' },
+            { key: 'dr', label: '減免', prefix: '+' },
+            { key: 'er', label: '閃避', prefix: '+' },
+            { key: 'hpRegen', label: '回血', prefix: '+' },
+            { key: 'mpRegen', label: '回魔', prefix: '+' },
+            { key: 'fireResist', label: '火抗', prefix: '+', suffix: '%' },
+            { key: 'waterResist', label: '水抗', prefix: '+', suffix: '%' },
+            { key: 'windResist', label: '風抗', prefix: '+', suffix: '%' },
+            { key: 'earthResist', label: '地抗', prefix: '+', suffix: '%' },
+            { key: 'crit', label: '暴擊', prefix: '+', suffix: '%' },
+            { key: 'critDmg', label: '暴傷', prefix: '+', suffix: '%' }
+        ];
+
+        let results = [];
+        for (let i = 0; i < config.length; i++) {
+            let c = config[i];
+            let val = def[c.key];
+            if (val !== undefined && val !== null && val !== 0 && val !== false) {
+                let sign = (c.prefix && typeof val === 'number' && val > 0) ? c.prefix : '';
+                results.push(`${c.label}${sign}${val}${c.suffix || ''}`);
+            }
+        }
+        return results;
+    },
+
+    renderDataSearchItemResult: function(result) {
         let def = result.def;
         let item = { itemId: result.itemId, enchant: 0, count: 1, isBlessed: false };
         let got = this.hasObtainedItem(result.itemId);
@@ -3551,7 +3577,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         let spell = def.spellId ? SPELLS[def.spellId] : null;
         let meta = [type, classLabel, spell?.name ? `技能：${spell.name}` : ''].filter(Boolean).map(v => this.escapeHtml(v)).join(' / ');
 
-        // 🎯 1. 解析裝備基本攻防與手數
+        // 1. 基礎攻防手數
         let statParts = [];
         if (def.type === 'weapon') {
             let maxAtk = def.dice ? def.dice.split('+')[0].split('d').pop() : '';
@@ -3561,27 +3587,14 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (def.ac !== undefined && def.ac !== 0) statParts.push(`防禦力: ${def.ac}`);
         if (def.safe !== undefined) statParts.push(`安定值: ${def.safe}`);
 
-        // 🎯 2. 解析所有額外屬性加成
-        let bonusParts = [];
-        if (def.hit) bonusParts.push(`命中+${def.hit}`);
-        if (def.dmg) bonusParts.push(`傷害+${def.dmg}`);
-        if (def.mDmg) bonusParts.push(`魔傷+${def.mDmg}`);
-        if (def.str) bonusParts.push(`力量+${def.str}`);
-        if (def.dex) bonusParts.push(`敏捷+${def.dex}`);
-        if (def.con) bonusParts.push(`體質+${def.con}`);
-        if (def.int) bonusParts.push(`智力+${def.int}`);
-        if (def.wis) bonusParts.push(`精神+${def.wis}`);
-        if (def.mr) bonusParts.push(`魔防+${def.mr}%`);
-        if (def.hp) bonusParts.push(`HP+${def.hp}`);
-        if (def.mp) bonusParts.push(`MP+${def.mp}`);
-        if (def.hpRegen) bonusParts.push(`回血+${def.hpRegen}`);
-        if (def.mpRegen) bonusParts.push(`回魔+${def.mpRegen}`);
+        // 🎯 2. 直接透過通用字典表一秒解析出所有額外屬性！
+        let bonusParts = this.formatItemBonuses(def);
 
         let allStats = [...statParts, ...bonusParts];
         let statHtml = allStats.length ? `<div class="text-xs text-gray-300">${allStats.map(s => this.escapeHtml(s)).join(' | ')}</div>` : '';
         let descHtml = def.desc ? `<div class="text-xs c-warn leading-relaxed">${this.escapeHtml(def.desc)}</div>` : '';
 
-        // 📦 🎯 專屬「裝備資訊內嵌小框」：將屬性與故事獨立框住，與下方掉落來源徹底區隔
+        // 📦 裝備資訊獨立內嵌小框
         let infoBoxHtml = `
             <div class="bg-black/50 border border-gray-800/80 rounded p-2.5 my-2 space-y-1">
                 ${meta ? `<div class="text-xs c-sys">${meta}</div>` : ''}
@@ -3590,7 +3603,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             </div>
         `;
 
-        // 🎯 3. 下方的怪物掉落來源
+        // 3. 掉落來源清單
         let sources = result.sources || [];
         let sourceHtml = sources.length ? sources.slice(0, 10).map(source => {
             let rateText = this.formatDropRate(source.rate);
