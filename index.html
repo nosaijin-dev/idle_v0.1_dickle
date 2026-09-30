@@ -3434,11 +3434,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (!def || !Array.isArray(def.classes) || def.classes.length === 0) return '';
         return def.classes.map(id => CLASSES[id]?.name || id).join(' / ');
     },
-    formatDropRate: function(rate) {
+   formatDropRate: function(rate) {
         let n = Math.max(0, Number(rate) || 0);
         if (n <= 0) return '0%';
-        let text = n >= 1 ? n.toFixed(n % 1 === 0 ? 0 : 2) : (n >= 0.1 ? n.toFixed(2) : n.toFixed(4));
-        return text.replace(/\.?0+$/, '') + '%';
+        // 🎯 安全轉換：小數點自動精簡，且絕對不誤殺整數末端的 0！
+        let text = n >= 1 ? (n % 1 === 0 ? String(n) : Number(n.toFixed(2)).toString()) : (n >= 0.1 ? Number(n.toFixed(2)).toString() : Number(n.toFixed(4)).toString());
+        return text + '%';
     },
     getDropSourcesForItem: function(itemId) {
         let sources = [];
