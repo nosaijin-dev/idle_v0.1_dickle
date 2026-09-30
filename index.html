@@ -3119,7 +3119,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         }
     },
 
-    getMapDropDetailHtml: function(mapId) {
+   getMapDropDetailHtml: function(mapId) {
         let map = MAPS[mapId];
         if (!map) return '';
         let stats = this.getMapStats(mapId);
@@ -3131,7 +3131,48 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             let dropItemsHtml = drops.length ? drops.map(d => {
                 let got = this.hasObtainedItem(d.id);
                 let def = ITEMS[d.id];
-                return `<span id="drop-check-${mapId}-${d.id}" class="${got ? 'c-success' : 'c-sys'} text-xs mr-2 inline-block my-0.5" title="掉落率 ${d.rate || 0}%">${got ? '✓' : '□'} ${def.name}</span>`;
+
+                // 🎯 依照遊戲官方規格組裝懸浮提示（直接顯示最大攻擊力）
+                let lines = [`【${def.name}】`, `掉落率: ${d.rate || 0}%`];
+                if (def.type) {
+                    let typeName = {
+                        weapon: def.hands === 2 ? '雙手武器' : '單手武器',
+                        helmet: '頭盔', armor: '盔甲', shield: '盾牌', cloak: '斗篷',
+                        boots: '靴子', gloves: '手套', belt: '腰帶', amulet: '項鍊', ring: '戒指'
+                    }[def.type] || '';
+
+                    let baseInfo = [];
+                    if (typeName) baseInfo.push(`[${typeName}]`);
+                    // 🗡️ 不顯示骰數，直接抓取最大攻擊力（例如 1d11 顯示 11）！
+                    if (def.dice) {
+                        let maxAtk = def.dice.split('+')[0].split('d').pop();
+                        baseInfo.push(`攻擊力: ${maxAtk}`);
+                    }
+                    if (def.ac !== undefined && def.ac !== 0) baseInfo.push(`防禦力: ${def.ac}`);
+                    if (def.safe !== undefined) baseInfo.push(`安定值: ${def.safe}`);
+                    if (baseInfo.length) lines.push(baseInfo.join(' | '));
+
+                    let bonusInfo = [];
+                    if (def.hit) bonusInfo.push(`額外命中: +${def.hit}`);
+                    if (def.dmg) bonusInfo.push(`額外傷害: +${def.dmg}`);
+                    if (def.mDmg) bonusInfo.push(`魔法額外傷害: +${def.mDmg}`);
+                    if (def.str) bonusInfo.push(`力量: +${def.str}`);
+                    if (def.dex) bonusInfo.push(`敏捷: +${def.dex}`);
+                    if (def.con) bonusInfo.push(`體質: +${def.con}`);
+                    if (def.int) bonusInfo.push(`智力: +${def.int}`);
+                    if (def.wis) bonusInfo.push(`精神: +${def.wis}`);
+                    if (def.mr) bonusInfo.push(`魔防: +${def.mr}%`);
+                    if (def.hp) bonusInfo.push(`最大 HP: +${def.hp}`);
+                    if (def.mp) bonusInfo.push(`最大 MP: +${def.mp}`);
+                    if (def.hpRegen) bonusInfo.push(`體力恢復: +${def.hpRegen}`);
+                    if (def.mpRegen) bonusInfo.push(`魔力恢復: +${def.mpRegen}`);
+                    if (bonusInfo.length) lines.push(bonusInfo.join(' | '));
+                }
+                if (def.desc) lines.push(def.desc);
+
+                let safeTooltip = lines.join('\n').replace(/"/g, '&quot;');
+
+                return `<span id="drop-check-${mapId}-${d.id}" class="${got ? 'c-success' : 'c-sys'} text-xs mr-2 inline-block my-0.5 cursor-help" title="${safeTooltip}">${got ? '✓' : '□'} ${def.name}</span>`;
             }).join('') : '<span class="c-sys text-xs">無特殊掉落</span>';
 
             return `
