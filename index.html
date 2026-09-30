@@ -3293,47 +3293,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             }
         });
     },
-    // 抽出獨立生成「單張地圖怪物掉落清單」的輕量小工具
-    getMapDropDetailHtml: function(mapId) {
-        let map = MAPS[mapId];
-        if (!map) return '';
-        let stats = this.getMapStats(mapId);
-        let mapDrop = this.getMapDropStats(mapId);
-
-        let monstersHtml = (map.monsters || []).map(monster => {
-            let drops = (monster.drops || []).filter(d => d && ITEMS[d.id] && !this.isRemovedSystemItem(d.id) && !(monster.isBoss && this.isBossTrashDrop(d.id)));
-            let killCount = (stats.monsters || {})[monster.id] || 0;
-            let dropItemsHtml = drops.length ? drops.map(d => {
-                let got = this.hasObtainedItem(d.id);
-                let def = ITEMS[d.id];
-                return `<span id="drop-check-${mapId}-${d.id}" class="${got ? 'c-success' : 'c-sys'} text-xs mr-2 inline-block my-0.5" title="掉落率 ${d.rate || 0}%">${got ? '✓' : '□'} ${def.name}</span>`;
-            }).join('') : '<span class="c-sys text-xs">無特殊掉落</span>';
-
-            return `
-                <div class="py-2 px-2 border-b border-dashed border-gray-800/80 last:border-0">
-                    <div class="flex justify-between items-center gap-2">
-                        <span class="${monster.isBoss ? 'c-err' : 'c-item'} font-bold text-sm">${monster.name}</span>
-                        <!-- 加上專屬 ID，方便原地秒改數字，不需重畫整張卡片 -->
-                        <span id="monster-kills-${mapId}-${monster.id}" class="c-sys text-xs">擊敗 ${killCount.toLocaleString()}</span>
-                    </div>
-                    <div class="mt-1 leading-relaxed">${dropItemsHtml}</div>
-                </div>
-            `;
-        }).join('');
-
-        return `
-            <div class="bg-gray-900 border border-gray-800 rounded p-2 mb-3">
-                <div class="flex justify-between items-center text-xs">
-                    <span class="c-sys font-bold">${map.name} 掉落達成度</span>
-                    <span id="map-drop-rate-${mapId}" class="c-warn font-semibold">${mapDrop.obtained}/${mapDrop.total} (${mapDrop.percent}%)</span>
-                </div>
-                <div class="bar-container mt-1.5 h-2.5"><div id="map-drop-bar-${mapId}" class="bar-fill mp" style="width:${mapDrop.percent}%;"></div></div>
-            </div>
-            <div class="space-y-1">
-                ${monstersHtml || '<div class="c-sys text-xs italic">此地圖尚無怪物資料</div>'}
-            </div>
-        `;
-    },
+    
 
     
     getSetCollectionDefinitions: function() {
