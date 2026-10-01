@@ -1545,9 +1545,9 @@ function addDropGlobally(monsterId, itemId, rate) {
     });
 }
 
-// 💡 未來派發軍令備忘錄（想派發時，把開頭的 // 拿掉換上 ID 即可）：
-// addDropGlobally('怪獸ID', '道具ID', 掉落率);
-// ['怪A', '怪B'].forEach(mId => addDropGlobally(mId, '道具ID', 掉落率));
+['book_apprentice_wizard', 'helm_shadow_mask', 'helm_elm'].forEach(itemId => {
+    addDropGlobally('elite_black_knight_captain', itemId, 7);
+});
 ['lastavard','demon_temple','forgotten_island','shadow_temple'].forEach(mapId => {
     if (!MAPS[mapId]) return;
     MAPS[mapId].monsters.forEach(m => {
