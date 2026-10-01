@@ -7986,7 +7986,7 @@ if(Math.random()*100 <= this.getER()) {
                 needUpdate = true; this.checkPlayerDeath();
             }
             
-            if (!(this.state.buffs.petrified > 0) && !(this.state.buffs.stun > 0)) {
+           if (!(this.state.buffs.petrified > 0) && !(this.state.buffs.stun > 0) && !(this.state.combatPauseUntil && Date.now() < this.state.combatPauseUntil)) {
                 if (this.state.targetMonster && this.state.buffs.create_zombie > 0) {
                     this.state.zombieTick++;
                     if (this.state.zombieTick >= 2) {
