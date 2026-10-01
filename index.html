@@ -1523,6 +1523,28 @@ Object.keys(MAPS).forEach(mapId => {
         if (!m.drops.some(drop => drop.id === 'crystal_elf_soul_to_mind')) m.drops.push({id:'crystal_elf_soul_to_mind', rate: 0.01});
     });
 });
+// ==================== 中央掉寶派發調度中心 ====================
+// 🎯 核心工具：全地圖自動搜尋目標怪獸並注入掉落物，免去逐張地圖翻找的痛苦
+function addDropGlobally(monsterId, itemId, rate) {
+    if (!ITEMS[itemId]) return;
+    Object.keys(MAPS).forEach(mapId => {
+        (MAPS[mapId].monsters || []).forEach(m => {
+            if (m.id === monsterId) {
+                m.drops = m.drops || [];
+                let existing = m.drops.find(d => d.id === itemId);
+                if (existing) {
+                    existing.rate = rate;
+                } else {
+                    m.drops.push({ id: itemId, rate: rate });
+                }
+            }
+        });
+    });
+}
+
+// 💡 未來派發軍令備忘錄（想派發時，把開頭的 // 拿掉換上 ID 即可）：
+// addDropGlobally('怪獸ID', '道具ID', 掉落率);
+// ['怪A', '怪B'].forEach(mId => addDropGlobally(mId, '道具ID', 掉落率));
 ['lastavard','demon_temple','forgotten_island','shadow_temple'].forEach(mapId => {
     if (!MAPS[mapId]) return;
     MAPS[mapId].monsters.forEach(m => {
