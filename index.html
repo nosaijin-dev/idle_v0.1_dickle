@@ -9002,32 +9002,39 @@ getCompanionActiveDetailHtml: function(c) {
         const learnedSpells = this.getCompanionLearnedSpells(c);
         const equipSummary = this.getCompanionEquipSummary(c);
 
+        // 鎖定按鈕文字：語意 100% 明確！
+        const lockButtonText = c.locked ? '解除鎖定' : '鎖定隊友';
+        const lockButtonClass = c.locked ? 'c-warn border-yellow-700' : 'c-sys border-gray-700';
+
         return `
-            <div class="companion-card border border-gray-800 hover:border-gray-700 bg-gray-950 p-3 rounded shadow transition">
+            <div class="companion-card border border-gray-800 hover:border-gray-700 bg-gray-950 p-3.5 rounded shadow transition">
                 <div class="flex justify-between items-start gap-2">
                     <div>
                         <div class="${this.getCompanionRarityClass(c.rarity)} font-bold text-lg">${c.name} <span class="text-xs c-sys">${CLASSES[c.classId].name}</span></div>
-                        <div class="text-xs c-sys">${c.rarity} / Lv.${this.getCompanionLevel(c)} / HP ${Math.floor(vitals.hp)}/${maxHp} / MP ${Math.floor(vitals.mp)}/${maxMp} / EXP ${req > 0 ? expPct.toFixed(1) + '%' : 'MAX'}</div>
+                        <div class="text-xs c-sys mt-0.5">${c.rarity} / Lv.${this.getCompanionLevel(c)} / HP ${Math.floor(vitals.hp)}/${maxHp} / MP ${Math.floor(vitals.mp)}/${maxMp} / EXP ${req > 0 ? expPct.toFixed(1) + '%' : 'MAX'}</div>
                     </div>
-                    <button class="btn-ui !px-2 !py-1 ${c.locked ? 'c-warn' : 'c-sys'}" onclick="game.toggleCompanionLock('${c.id}')">${c.locked ? '鎖定' : '未鎖'}</button>
+                    <!-- 鎖定狀態清晰按鈕 -->
+                    <button class="btn-ui !px-2.5 !py-1 text-xs ${lockButtonClass}" onclick="game.toggleCompanionLock('${c.id}')">${lockButtonText}</button>
                 </div>
                 
-                <!-- 基礎屬性 -->
-                <div class="text-xs text-gray-300 mt-2 bg-black/40 border border-gray-900 rounded px-2 py-1">${statText}</div>
+                <!-- 基本能力：標籤正名 -->
+                <div class="text-xs text-gray-200 mt-2 bg-black/40 border border-gray-900 rounded px-2.5 py-1.5">
+                    <span class="text-emerald-400 font-bold">基本能力:</span> ${statText}
+                </div>
                 
                 <!-- 已學技能 -->
-                <div class="text-xs c-info mt-2 leading-relaxed">
-                    <span class="font-bold text-indigo-400">技能：</span>${learnedSpells.length ? learnedSpells.map(id => SPELLS[id]?.name || id).join('、') : '尚未學習'}
+                <div class="text-xs text-gray-300 mt-2 leading-relaxed">
+                    <span class="font-bold text-emerald-400">已學技能：</span>${learnedSpells.length ? learnedSpells.map(id => SPELLS[id]?.name || id).join('、') : '尚未學習'}
                 </div>
 
-                <!-- 裝備 -->
-                <div class="text-xs text-gray-400 mt-1 truncate">
-                    <span class="text-yellow-500 font-semibold">裝備：</span>${equipSummary}
+                <!-- 裝備完整展示（移除截斷，完整換行列出！） -->
+                <div class="text-xs text-gray-300 mt-1.5 leading-relaxed">
+                    <span class="text-emerald-400 font-bold">裝備：</span><span class="text-yellow-400">${equipSummary}</span>
                 </div>
 
-                <!-- 操作區：醒目的召喚出戰與解雇按鈕 -->
-                <div class="mt-3 pt-2 border-t border-gray-800 flex justify-end items-center gap-2">
-                    <button class="btn-ui c-err border-red-800 !px-2.5 !py-1 text-xs" onclick="game.dismissCompanion('${c.id}')">解雇</button>
+                <!-- 操作區：召喚出戰與解雇按鈕 -->
+                <div class="mt-3.5 pt-2 border-t border-gray-800 flex justify-end items-center gap-2.5">
+                    <button class="btn-ui c-err border-red-800 !px-3 !py-1 text-xs" onclick="game.dismissCompanion('${c.id}')">解雇</button>
                     <button class="btn-ui c-success border-green-800 !px-4 !py-1 text-xs font-bold" onclick="game.summonCompanion('${c.id}')">召喚出戰</button>
                 </div>
             </div>`;
