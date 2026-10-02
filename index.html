@@ -8547,7 +8547,14 @@ Object.assign(game, {
 
         // 4. 藥水下拉選項產生器 (自 COMPANION_POTIONS 動態取得)
         const buildPotionOptions = (selectedId) => {
-            return COMPANION_POTIONS.map(p => `<option value="${p.id}" ${selectedId === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
+            const list = (typeof ITEMS !== 'undefined')
+                ? Object.entries(ITEMS)
+                    .filter(([id, item]) => item && item.type === 'potion_hp')
+                    .map(([id, item]) => ({ id, name: item.name, heal: item.heal || 0 }))
+                    .sort((a, b) => a.heal - b.heal) // 自動依補血量由小到大排序 (紅水 ➜ 澄水 ➜ 白水)
+                : [];
+            if (!list.length) return `<option value="${selectedId}">${selectedId}</option>`;
+            return list.map(p => `<option value="${p.id}" ${selectedId === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
         };
         const secondHasteName = c.classId === 'knight' ? '勇氣藥水' : (['elf','dark_elf'].includes(c.classId) ? '精靈餅乾' : '無職業可用道具');
 
