@@ -8973,31 +8973,17 @@ Object.assign(game, {
         }
         list.innerHTML = standbyCompanions.map(c => this.getCompanionCardHtml(c)).join('');
     },
-    getCompanionCardHtml: function(c) {
-        const active = this.state.activeCompanion === c.id;
+   getCompanionCardHtml: function(c) {
         const vitals = this.getCompanionVitalsView(c);
         const maxHp = vitals.maxHp, maxMp = vitals.maxMp;
-        const settings = this.getCompanionSettings(c);
         const req = this.getCompanionNextExp(c);
         const expPct = req > 0 ? Math.min(100, ((c.exp || 0) / req) * 100) : 100;
-        const statText = COMPANION_STATS.map(stat => `${this.getStatLabel(stat)} ${this.getCompanionEffectiveStat(c, stat)}`).join(' / ');
+        const statText = COMPANION_STATS.map(stat => `${this.getStatLabel(stat)} ${this.getCompanionEffectiveStat ? this.getCompanionEffectiveStat(c, stat) : c.stats[stat]}`).join(' / ');
         const learnedSpells = this.getCompanionLearnedSpells(c);
-        const skillOptions = this.getCompanionSkillOptions(c).map(id => `<option value="${id}" ${c.autoSkill === id ? 'selected' : ''}>${SPELLS[id].name}</option>`).join('');
-        const skillControl = `<select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-sm max-w-[220px]" onchange="game.setCompanionSkill('${c.id}', this.value)">
-                    <option value="none">無（使用普通攻擊）</option>${skillOptions}
-                </select>`;
-        const autoSpellOptions = this.getCompanionAutoSpellOptions(c);
-        const autoSpellRows = autoSpellOptions.length
-            ? autoSpellOptions.map(id => `<label class="cursor-pointer hover:text-white"><input type="checkbox" class="w-3 h-3 align-middle" ${c.autoSpells?.includes(id) ? 'checked' : ''} onchange="game.toggleCompanionAutoSpell('${c.id}','${id}', this.checked)"> ${SPELLS[id].name}</label>`).join('')
-            : '<span class="c-sys italic">尚無可自動施放技能</span>';
-        const equipRows = COMPANION_EQUIP_SLOTS.filter(slot => c.equipment?.[slot]).map(slot => {
-            const key = c.equipment[slot], item = this.state.inventory[key], def = item && ITEMS[item.itemId];
-            if (!item || !def) return '';
-            return `<span class="text-xs c-item mr-2">${this.getCompanionSlotName(slot)}:${this.getDisplayName(item, def)} <button class="btn-ui !px-1 !py-0 text-xs" onclick="game.unequipCompanionItem('${c.id}','${slot}')">卸</button></span>`;
-        }).join('') || '<span class="text-xs c-sys">未裝備</span>';
-        const secondHasteName = c.classId === 'knight' ? '勇氣藥水' : (['elf','dark_elf'].includes(c.classId) ? '精靈餅乾' : '無職業可用道具');
+        const equipSummary = this.getCompanionEquipSummary(c);
+
         return `
-            <div class="companion-card ${active ? 'border-yellow-500' : ''}">
+            <div class="companion-card border border-gray-800 hover:border-gray-700 bg-gray-950 p-3 rounded shadow transition">
                 <div class="flex justify-between items-start gap-2">
                     <div>
                         <div class="${this.getCompanionRarityClass(c.rarity)} font-bold text-lg">${c.name} <span class="text-xs c-sys">${CLASSES[c.classId].name}</span></div>
@@ -9005,42 +8991,24 @@ Object.assign(game, {
                     </div>
                     <button class="btn-ui !px-2 !py-1 ${c.locked ? 'c-warn' : 'c-sys'}" onclick="game.toggleCompanionLock('${c.id}')">${c.locked ? '鎖定' : '未鎖'}</button>
                 </div>
-                <div class="text-xs c-sys mt-2">${statText}</div>
-                <div class="text-xs c-info mt-2">技能：${learnedSpells.length ? learnedSpells.map(id => SPELLS[id]?.name || id).join('、') : '尚未學習'}</div>
-                <div class="mt-2">
-                    <div class="c-err text-xs font-bold mb-1">攻擊技能</div>
-                    ${skillControl}
+                
+                <!-- 基礎屬性 -->
+                <div class="text-xs text-gray-300 mt-2 bg-black/40 border border-gray-900 rounded px-2 py-1">${statText}</div>
+                
+                <!-- 已學技能 -->
+                <div class="text-xs c-info mt-2 leading-relaxed">
+                    <span class="font-bold text-indigo-400">技能：</span>${learnedSpells.length ? learnedSpells.map(id => SPELLS[id]?.name || id).join('、') : '尚未學習'}
                 </div>
-                <div class="mt-2 text-xs c-sys">
-                    <div class="c-info font-bold mb-1">輔助技能</div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">${autoSpellRows}</div>
-                    <div class="mt-2 border-t border-gray-800 pt-2 leading-relaxed">
-                        隊友會優先治療血量低於 72% 的玩家、寵物或自己，並分別為玩家與自己維持勾選的輔助效果。輔助空窗期使用選定的攻擊技能；MP 不足或未選攻擊技能時改為普攻。
-                    </div>
+
+                <!-- 裝備 -->
+                <div class="text-xs text-gray-400 mt-1 truncate">
+                    <span class="text-yellow-500 font-semibold">裝備：</span>${equipSummary}
                 </div>
-                <div class="mt-2 border-t border-gray-700 pt-2 text-xs c-sys space-y-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="c-info">體力低於</span>
-                        <input type="number" min="1" max="100" value="${settings.autoHpThreshold}" class="w-16 bg-black border border-gray-600 text-center text-white py-1 rounded" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold', this.value)">
-                        <span class="c-info">% 自動使用</span>
-                        <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType', this.value)">
-                            <option value="potion_red" ${settings.autoHpType === 'potion_red' ? 'selected' : ''}>治癒藥水</option>
-                            <option value="potion_orange" ${settings.autoHpType === 'potion_orange' ? 'selected' : ''}>強力治癒藥水</option>
-                            <option value="potion_clear" ${settings.autoHpType === 'potion_clear' ? 'selected' : ''}>終極治癒藥水</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        <label class="cursor-pointer hover:text-white"><input type="checkbox" class="w-3 h-3 align-middle" ${settings.autoBuyHp ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyHp', this.checked)"> 自動補買補血藥</label>
-                        <label class="cursor-pointer hover:text-white"><input type="checkbox" class="w-3 h-3 align-middle" ${settings.autoBuyMp ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyMp', this.checked)"> 藍色藥水</label>
-                        <label class="cursor-pointer hover:text-white"><input type="checkbox" class="w-3 h-3 align-middle" ${settings.autoBuyWis ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyWis', this.checked)"> 慎重藥水</label>
-                        <label class="cursor-pointer hover:text-white"><input type="checkbox" class="w-3 h-3 align-middle" ${settings.autoBuyHaste ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyHaste', this.checked)"> 加速藥水</label>
-                        <label class="cursor-pointer hover:text-white col-span-2 md:col-span-1" title="${secondHasteName}"><input type="checkbox" class="w-3 h-3 align-middle" ${settings.autoBuySecondHaste ? 'checked' : ''} ${secondHasteName.startsWith('無') ? 'disabled' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuySecondHaste', this.checked)"> 二段加速</label>
-                    </div>
-                </div>
-                <div class="mt-2 border-t border-gray-700 pt-2">${equipRows}</div>
-                <div class="mt-3 flex flex-wrap justify-end gap-2">
-                    <button class="btn-ui c-success border-green-800" onclick="game.summonCompanion('${c.id}')">${active ? '出戰中' : '召喚'}</button>
-                    <button class="btn-ui c-err border-red-800" onclick="game.dismissCompanion('${c.id}')">解雇</button>
+
+                <!-- 操作區：醒目的召喚出戰與解雇按鈕 -->
+                <div class="mt-3 pt-2 border-t border-gray-800 flex justify-end items-center gap-2">
+                    <button class="btn-ui c-err border-red-800 !px-2.5 !py-1 text-xs" onclick="game.dismissCompanion('${c.id}')">解雇</button>
+                    <button class="btn-ui c-success border-green-800 !px-4 !py-1 text-xs font-bold" onclick="game.summonCompanion('${c.id}')">召喚出戰</button>
                 </div>
             </div>`;
     },
