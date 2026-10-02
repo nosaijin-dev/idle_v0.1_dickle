@@ -8941,7 +8941,13 @@ getCompanionActiveDetailHtml: function(c) {
             el.className = `text-base font-normal ${this.getCompanionRarityClass(active.rarity)}`;
             el.innerText = `${active.name} ${CLASSES[active.classId].name}`;
         }
-        if (detailEl) detailEl.innerHTML = this.getCompanionActiveDetailHtml(active);
+        if (detailEl) {
+            const isUserInteracting = detailEl.contains(document.activeElement) && 
+                ['SELECT', 'INPUT'].includes(document.activeElement.tagName);
+            if (!isUserInteracting) {
+                detailEl.innerHTML = this.getCompanionActiveDetailHtml(active);
+            }
+        }
         if (statusEl) {
             if (this.state.level < 30) {
                 statusEl.innerHTML = '<div class="c-sys italic">30 級後開放隊友系統。</div>';
