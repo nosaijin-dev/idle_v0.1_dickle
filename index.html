@@ -224,21 +224,30 @@
                     </div>
                     <div id="pet-list" class="flex-1 overflow-y-auto custom-scroll pr-2 grid grid-cols-2 gap-3 content-start"></div>
                 </div>
-                <div id="tab-companion" class="flex-1 flex flex-col h-full overflow-hidden hidden">
-                    <div class="c-title mb-3 text-xl border-b border-gray-800 pb-2 flex justify-between">
+                <div id="tab-companion" class="flex-1 flex flex-col h-full overflow-y-auto custom-scroll pr-2 hidden">
+                    <!-- 頂部標題 -->
+                    <div class="c-title mb-2 text-xl border-b border-gray-800 pb-2 flex justify-between shrink-0">
                         <span>隊友</span><span id="ui-active-companion" class="text-base c-sys font-normal">30 級後開放</span>
                     </div>
-                    <div id="active-companion-detail" class="mb-3"></div>
-                    <div class="grid grid-cols-1 gap-3 mb-4 c-sys bg-gray-900 p-4 rounded border border-gray-800">
-                            <div>30 級後可用金幣尋找隊友；同時只能帶一名隊友與一隻寵物出戰。未出戰隊友會每 16 秒逐漸恢復 HP/MP。</div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <button class="btn-ui c-info" onclick="game.drawCompanions(1)">抽取隊友 100,000</button>
-                            <button class="btn-ui c-warn" onclick="game.drawCompanions(10)">十連抽 1,000,000</button>
-                            <button class="btn-ui c-err border-red-800" onclick="game.dismissUnlockedCompanions()">解雇未鎖定隊友</button>
-                            <span id="companion-count" class="text-sm c-sys">0/80</span>
+
+                    <!-- 1. 最頂部：-->
+                    <div class="shrink-0 mb-3 text-xs c-sys bg-gray-900/80 p-2.5 rounded border border-gray-800 shadow-sm">
+                        <div class="text-[11px] text-gray-400 mb-1.5 flex justify-between items-center">
+                            <span>30 級後開放；同時帶一名隊友與一隻寵物。未出戰隊友每 16 秒自動恢復 HP/MP。</span>
+                            <span id="companion-count" class="text-xs font-bold text-yellow-500">0/80</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button class="btn-ui c-info text-xs py-1 px-2.5" onclick="game.drawCompanions(1)">抽取隊友 100,000</button>
+                            <button class="btn-ui c-warn text-xs py-1 px-2.5" onclick="game.drawCompanions(10)">十連抽 1,000,000</button>
+                            <button class="btn-ui c-err border-red-800 text-xs py-1 px-2.5" onclick="game.dismissUnlockedCompanions()">解雇未鎖定隊友</button>
                         </div>
                     </div>
-                    <div id="companion-list" class="flex-1 overflow-y-auto custom-scroll pr-2 grid grid-cols-1 xl:grid-cols-2 gap-3 content-start"></div>
+
+                    <!-- 2. 中間：出戰指揮工作台 -->
+                    <div id="active-companion-detail" class="shrink-0 mb-3"></div>
+
+                    <!-- 3. 底層：後備軍營卡片名冊（隨大捲軸自然向下延伸） -->
+                    <div id="companion-list" class="grid grid-cols-1 xl:grid-cols-2 gap-3 content-start pb-6"></div>
                 </div>
                 <div id="tab-shop" class="flex-1 flex flex-col h-full overflow-hidden hidden">
                     <div class="flex-1 overflow-y-auto custom-scroll pr-2">
