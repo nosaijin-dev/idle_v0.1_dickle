@@ -8462,6 +8462,18 @@ Object.assign(game, {
             return (rank[a.rarity] - rank[b.rarity]) || a.name.localeCompare(b.name, 'zh-Hant');
         });
     },
+    // 自動探測 ITEMS 中所有可用於補血的藥水 (type === 'potion_hp')
+    getCompanionAvailableHpPotions: function() {
+        if (typeof ITEMS === 'undefined') return [];
+        return Object.entries(ITEMS)
+            .filter(([id, item]) => item && item.type === 'potion_hp')
+            .map(([id, item]) => ({
+                id: id,
+                name: item.name,
+                heal: item.heal || 0
+            }))
+            .sort((a, b) => a.heal - b.heal); // 貼心設計：自動按補血量由小到大排序 (紅 ➜ 橙 ➜ 白)
+    },
     getCompanionBuffNames: function(c) {
         if (!c || !c.buffs) return [];
         const potionNames = {
