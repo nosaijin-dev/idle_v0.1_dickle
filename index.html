@@ -8692,6 +8692,29 @@ Object.assign(game, {
         }
         this.renderCompanionStatus();
     },
+   // 取得隊友裝備提供的單項屬性加成
+    getCompanionEquipStatBonus: function(companion, stat) {
+        if (!companion || !companion.equipment) return 0;
+        let bonus = 0;
+        Object.values(companion.equipment).forEach(key => {
+            if (!key || !this.state.inventory?.[key]) return;
+            const itemDef = ITEMS[this.state.inventory[key].itemId];
+            if (!itemDef) return;
+            // 兼容 item.dex / item.bonus.dex / item.stats.dex
+            if (itemDef[stat]) bonus += itemDef[stat];
+            if (itemDef.bonus?.[stat]) bonus += itemDef.bonus[stat];
+            if (itemDef.stats?.[stat]) bonus += itemDef.stats[stat];
+        });
+        return bonus;
+    },
+
+    // 取得隊友的最終總屬性 (基礎 + 萬能藥 + 裝備)
+    getCompanionEffectiveStat: function(companion, stat) {
+        if (!companion) return 0;
+        const cls = CLASSES[companion.classId] || CLASSES.knight;
+        const baseVal = companion.stats?.[stat] ?? (cls.baseStats?.[stat] || 0);
+        return baseVal + this.getCompanionEquipStatBonus(companion, stat);
+    },
     getCompanionMaxHp: function(companion) {
         if (!companion) return 1;
         const cls = CLASSES[companion.classId] || CLASSES.knight;
@@ -8826,7 +8849,7 @@ Object.assign(game, {
         const settings = this.getCompanionSettings(c);
         const req = this.getCompanionNextExp(c);
         const expPct = req > 0 ? Math.min(100, ((c.exp || 0) / req) * 100) : 100;
-        const statText = COMPANION_STATS.map(stat => `${this.getStatLabel(stat)} ${c.stats[stat]}`).join(' / ');
+        const statText = COMPANION_STATS.map(stat => `${this.getStatLabel(stat)} ${this.getCompanionEffectiveStat(c, stat)}`).join(' / ');
         const learnedSpells = this.getCompanionLearnedSpells(c);
         const skillOptions = this.getCompanionSkillOptions(c).map(id => `<option value="${id}" ${c.autoSkill === id ? 'selected' : ''}>${SPELLS[id].name}</option>`).join('');
         const skillControl = `<select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-sm max-w-[220px]" onchange="game.setCompanionSkill('${c.id}', this.value)">
