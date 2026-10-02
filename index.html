@@ -9184,6 +9184,18 @@ Object.assign(game, {
         this.updateUI();
         this.logSystem(`${this.state.companions[id].name} 加入冒險。`, 'reward');
     },
+    // 隊友下場休息
+    unsummonCompanion: function() {
+        if (!this.state.activeCompanion) return;
+        const c = this.getActiveCompanion ? this.getActiveCompanion() : this.state.companions?.[this.state.activeCompanion];
+        const name = c ? c.name : '隊友';
+        this.state.activeCompanion = null;
+        if (this.state.activeCompanionId) this.state.activeCompanionId = null;
+        this.logSystem(`${name} 離開了隊伍，等候您再次召喚。`, 'info');
+        this.updateUI();
+        this.renderCompanions();
+        this.renderCompanionStatus();
+    },
     toggleCompanionLock: function(id) {
         const c = this.state.companions?.[id];
         if (!c) return;
