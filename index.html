@@ -8954,15 +8954,24 @@ Object.assign(game, {
         const list = document.getElementById('companion-list');
         if (!list) return;
         if (this.state.level < 30) {
-            list.innerHTML = '<div class="c-sys italic p-3">隊友系統 30 級後開放。</div>';
+            list.innerHTML = '<div class="c-sys italic p-3 col-span-full">隊友系統 30 級後開放。</div>';
             return;
         }
         const companions = this.getCompanionList();
         if (companions.length === 0) {
-            list.innerHTML = '<div class="c-sys italic p-3">目前沒有隊友。可以用金幣抽取。</div>';
+            list.innerHTML = '<div class="c-sys italic p-3 col-span-full">目前沒有隊友。可以用金幣抽取。</div>';
             return;
         }
-        list.innerHTML = companions.map(c => this.getCompanionCardHtml(c)).join('');
+        
+        // 出戰中的隊友由上方指揮中心接管，下方呈現後備隊友！
+        const active = this.getActiveCompanion ? this.getActiveCompanion() : null;
+        const standbyCompanions = companions.filter(c => !active || c.id !== active.id);
+        
+        if (standbyCompanions.length === 0) {
+            list.innerHTML = '<div class="c-sys italic p-4 col-span-full text-center bg-gray-900/40 rounded border border-gray-800">目前尚無後備隊友。</div>';
+            return;
+        }
+        list.innerHTML = standbyCompanions.map(c => this.getCompanionCardHtml(c)).join('');
     },
     getCompanionCardHtml: function(c) {
         const active = this.state.activeCompanion === c.id;
