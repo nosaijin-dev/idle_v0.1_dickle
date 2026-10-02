@@ -8522,9 +8522,9 @@ Object.assign(game, {
             return `${this.getCompanionSlotName(row.slot)}:${this.getDisplayName(item, def)}`;
         }).join(' / ');
     },
- getCompanionActiveDetailHtml: function(c) {
+getCompanionActiveDetailHtml: function(c) {
         if (this.state.level < 30) return '<div class="c-sys italic bg-gray-900 border border-gray-800 rounded p-3">30 級後開放隊友系統。</div>';
-        if (!c) return '<div class="c-sys italic bg-gray-900 border border-gray-800 rounded p-3 text-center">尚未召喚隊友（處於單挑狀態）。可於下方後備名冊點擊「出戰」。</div>';
+        if (!c) return '<div class="c-sys italic bg-gray-900/60 border border-gray-800 rounded p-4 text-center text-sm">目前無出戰隊友（處於單挑狀態）。請至下方「備戰隊友」點擊「召喚出戰」。</div>';
         
         const vitals = this.getCompanionVitalsView(c);
         const maxHp = vitals.maxHp, maxMp = vitals.maxMp;
@@ -8535,40 +8535,39 @@ Object.assign(game, {
         const buffText = this.getCompanionBuffNames(c).join(' / ') || '無附加狀態';
         const statText = COMPANION_STATS.map(stat => `${this.getStatLabel(stat)} ${this.getCompanionEffectiveStat ? this.getCompanionEffectiveStat(c, stat) : c.stats[stat]}`).join(' / ');
 
-        // 1. 攻擊技能下拉選單
+        // 1. 攻擊技能下拉選單 (字體微調不切邊)
         const skillOptions = this.getCompanionSkillOptions(c).map(id => `<option value="${id}" ${c.autoSkill === id ? 'selected' : ''}>${SPELLS[id]?.name || id}</option>`).join('');
         const skillControl = `
-            <select class="bg-black border border-gray-700 text-white py-1 px-2 rounded text-xs w-full max-w-[240px]" onchange="game.setCompanionSkill('${c.id}', this.value)">
+            <select class="bg-black border border-gray-700 text-white py-1.5 px-2.5 rounded text-sm w-full max-w-[280px] focus:border-yellow-500" onchange="game.setCompanionSkill('${c.id}', this.value)">
                 <option value="none">無（使用普通攻擊）</option>${skillOptions}
             </select>`;
 
         // 2. 輔助技能複選框
         const autoSpellOptions = this.getCompanionAutoSpellOptions(c);
         const autoSpellRows = autoSpellOptions.length
-            ? autoSpellOptions.map(id => `<label class="cursor-pointer hover:text-white flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" ${c.autoSpells?.includes(id) ? 'checked' : ''} onchange="game.toggleCompanionAutoSpell('${c.id}','${id}', this.checked)"> <span>${SPELLS[id]?.name || id}</span></label>`).join('')
+            ? autoSpellOptions.map(id => `<label class="cursor-pointer hover:text-white flex items-center gap-1.5 text-xs text-gray-200"><input type="checkbox" class="w-4 h-4 rounded" ${c.autoSpells?.includes(id) ? 'checked' : ''} onchange="game.toggleCompanionAutoSpell('${c.id}','${id}', this.checked)"> <span>${SPELLS[id]?.name || id}</span></label>`).join('')
             : '<span class="c-sys italic">尚無可自動施放之輔助技能</span>';
 
         // 3. 裝備列 (含卸裝按鈕)
         const equipRows = COMPANION_EQUIP_SLOTS.filter(slot => c.equipment?.[slot]).map(slot => {
             const key = c.equipment[slot], item = this.state.inventory[key], def = item && ITEMS[item.itemId];
             if (!item || !def) return '';
-            return `<span class="inline-flex items-center gap-1 bg-black/60 border border-gray-800 rounded px-2 py-0.5 text-xs text-yellow-300 mr-1.5 mb-1">${this.getCompanionSlotName(slot)}: ${this.getDisplayName(item, def)} <button class="btn-ui !px-1.5 !py-0 text-[10px] c-err" onclick="game.unequipCompanionItem('${c.id}','${slot}')">卸</button></span>`;
+            return `<span class="inline-flex items-center gap-1.5 bg-black/60 border border-gray-800 rounded px-2.5 py-1 text-xs text-yellow-300 mr-2 mb-1.5">${this.getCompanionSlotName(slot)}: ${this.getDisplayName(item, def)} <button class="btn-ui !px-1.5 !py-0 text-xs c-err" onclick="game.unequipCompanionItem('${c.id}','${slot}')">卸</button></span>`;
         }).join('') || '<span class="text-xs text-gray-500">未穿戴任何裝備</span>';
 
-        // 4. 藥水下拉選項產生器 (自 COMPANION_POTIONS 動態取得)
+        // 4. 動態藥水選項產生器 (自 ITEMS 掃描)
         const buildPotionOptions = (selectedId) => {
             const list = (typeof ITEMS !== 'undefined')
                 ? Object.entries(ITEMS)
                     .filter(([id, item]) => item && item.type === 'potion_hp')
                     .map(([id, item]) => ({ id, name: item.name, heal: item.heal || 0 }))
-                    .sort((a, b) => a.heal - b.heal) // 自動依補血量由小到大排序 (紅水 ➜ 澄水 ➜ 白水)
+                    .sort((a, b) => a.heal - b.heal)
                 : [];
             if (!list.length) return `<option value="${selectedId}">${selectedId}</option>`;
             return list.map(p => `<option value="${p.id}" ${selectedId === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
         };
         const secondHasteName = c.classId === 'knight' ? '勇氣藥水' : (['elf','dark_elf'].includes(c.classId) ? '精靈餅乾' : '無職業可用道具');
 
-        // 讀取三階段喝水門檻（相容舊存檔）
         const th1 = settings.autoHpThreshold1 ?? settings.autoHpThreshold ?? 80;
         const type1 = settings.autoHpType1 ?? settings.autoHpType ?? 'potion_red';
         const th2 = settings.autoHpThreshold2 ?? 60;
@@ -8577,97 +8576,101 @@ Object.assign(game, {
         const type3 = settings.autoHpType3 ?? 'potion_clear';
 
         return `
-            <div class="bg-gray-950 border border-yellow-700/80 rounded p-3 shadow-[0_0_15px_rgba(234,179,8,0.15)]">
-                <!-- 頭像身分與操作按鈕 -->
-                <div class="flex flex-wrap justify-between items-start gap-2 mb-2 pb-2 border-b border-gray-800">
-                    <div>
-                        <div class="${this.getCompanionRarityClass(c.rarity)} font-bold text-lg">${c.name} <span class="text-xs c-sys">${CLASSES[c.classId].name}</span></div>
-                        <div class="text-xs c-sys">出戰中 / ${c.rarity} / Lv.${this.getCompanionLevel(c)}</div>
-                    </div>
+            <div>
+                <!-- 身分標題與緊鄰的【下場休息】按鈕 -->
+                <div class="flex flex-wrap items-center gap-3 mb-2.5 pb-2 border-b border-gray-800">
                     <div class="flex items-center gap-2">
-                        <button class="btn-ui c-warn text-xs py-1 px-3 border-amber-700" onclick="game.unsummonCompanion()">下場休息</button>
+                        <span class="${this.getCompanionRarityClass(c.rarity)} font-bold text-lg">${c.name}</span>
+                        <span class="${this.getCompanionRarityClass(c.rarity)} font-bold text-lg">${CLASSES[c.classId].name}</span>
+                        <span class="text-xs c-sys ml-1">(${c.rarity} / Lv.${this.getCompanionLevel(c)})</span>
                     </div>
+                    <!-- 下場休息緊鄰在職業右方，顯眼不遺漏 -->
+                    <button class="btn-ui c-warn text-xs py-1 px-3 border-amber-700 hover:border-amber-500 font-medium" onclick="game.unsummonCompanion()">下場休息</button>
                 </div>
 
                 <!-- 體魔經條 -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm mb-3">
-                    <div class="flex items-center">體力:<div class="bar-container flex-1"><div class="bar-fill hp" style="width:${Math.max(0, vitals.hp / maxHp * 100)}%;"></div><span class="bar-text">${Math.floor(vitals.hp)}/${maxHp}</span></div></div>
-                    <div class="flex items-center">魔力:<div class="bar-container flex-1"><div class="bar-fill mp" style="width:${maxMp > 0 ? Math.max(0, vitals.mp / maxMp * 100) : 0}%;"></div><span class="bar-text">${Math.floor(vitals.mp)}/${maxMp}</span></div></div>
-                    <div class="flex items-center">經驗:<div class="bar-container flex-1"><div class="bar-fill exp" style="width:${expPct}%;"></div><span class="bar-text">${req > 0 ? expPct.toFixed(2) + '%' : 'MAX'}</span></div></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-sm mb-3">
+                    <div class="flex items-center">體力:<div class="bar-container flex-1 ml-1"><div class="bar-fill hp" style="width:${Math.max(0, vitals.hp / maxHp * 100)}%;"></div><span class="bar-text">${Math.floor(vitals.hp)}/${maxHp}</span></div></div>
+                    <div class="flex items-center">魔力:<div class="bar-container flex-1 ml-1"><div class="bar-fill mp" style="width:${maxMp > 0 ? Math.max(0, vitals.mp / maxMp * 100) : 0}%;"></div><span class="bar-text">${Math.floor(vitals.mp)}/${maxMp}</span></div></div>
+                    <div class="flex items-center">經驗:<div class="bar-container flex-1 ml-1"><div class="bar-fill exp" style="width:${expPct}%;"></div><span class="bar-text">${req > 0 ? expPct.toFixed(2) + '%' : 'MAX'}</span></div></div>
                 </div>
 
-                <!-- 作戰指令工作區 -->
-                <div class="space-y-2 text-xs">
+                <!-- 模組化設定資訊區 (全標題統一翡翠綠 text-emerald-400) -->
+                <div class="space-y-2.5 text-xs">
                     <!-- 基本能力 -->
-                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5 flex flex-wrap items-center gap-x-2">
-                        <span class="text-amber-400 font-bold shrink-0">【基本能力】</span>
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-3 py-2 flex flex-wrap items-center gap-x-2">
+                        <span class="text-emerald-400 font-bold shrink-0">【基本能力】</span>
                         <span class="text-gray-200">${statText}</span>
                     </div>
 
                     <!-- 當前狀態 -->
-                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-3 py-2">
                         <div class="text-emerald-400 font-bold mb-1">【當前狀態】</div>
                         <div class="text-gray-300 leading-relaxed">${buffText}</div>
                     </div>
 
-                    <!-- 戰術設定：攻擊與輔助（支援即時調整） -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
-                        <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-2">
-                            <span class="text-rose-400 font-bold block mb-1.5">【指定攻擊技能】</span>
-                            ${skillControl}
-                        </div>
-                        <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-2">
-                            <span class="text-sky-400 font-bold block mb-1.5">【常駐輔助施放】</span>
-                            <div class="flex flex-wrap gap-x-3 gap-y-1.5">${autoSpellRows}</div>
-                        </div>
-                    </div>
-
-                    <!-- 裝備配戴管理 -->
-                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-2">
-                        <span class="text-yellow-400 font-bold block mb-1.5">【已穿戴裝備】（可直接卸下）</span>
+                    <!-- 穿戴裝備 -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-3 py-2">
+                        <span class="text-emerald-400 font-bold block mb-1.5">【已穿戴裝備】</span>
                         <div class="flex flex-wrap items-center">${equipRows}</div>
                     </div>
 
-                    <!-- 已學技能 -->
-                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
-                        <span class="text-indigo-400 font-bold">【已學技能庫】</span>
-                        <div class="text-gray-300 mt-1 leading-relaxed">${learnedSpells.length ? learnedSpells.map(id => SPELLS[id]?.name || id).join('、') : '尚未學習任何技能'}</div>
+                    <!-- 已學技能庫 (依照大小姐指示：提前至指定技能前展示) -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-3 py-2">
+                        <span class="text-emerald-400 font-bold block mb-1">【已學技能庫】</span>
+                        <div class="text-gray-300 leading-relaxed">${learnedSpells.length ? learnedSpells.map(id => SPELLS[id]?.name || id).join('、') : '尚未學習任何技能'}</div>
                     </div>
 
-                    <!-- 三階段階梯式自動補給設定 -->
-                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-2 space-y-2">
-                        <span class="text-orange-400 font-bold block">【三階段階梯喝水與補給策略】</span>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 pb-1 border-b border-gray-800">
-                            <!-- 輕傷線 -->
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-emerald-300 shrink-0">輕傷:</span>
-                                <input type="number" min="1" max="100" value="${th1}" class="w-12 bg-black border border-gray-600 text-center text-white py-0.5 rounded text-xs" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold1', this.value); game.setCompanionConsumableSetting('${c.id}','autoHpThreshold', this.value);">
-                                <span>% 喝</span>
-                                <select class="bg-black border border-gray-600 text-white py-0.5 px-1 rounded text-xs flex-1" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType1', this.value); game.setCompanionConsumableSetting('${c.id}','autoHpType', this.value);">${buildPotionOptions(type1)}</select>
+                    <!-- 戰術設定：攻擊與輔助 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+                        <div class="bg-black/40 border border-gray-800/80 rounded px-3 py-2.5">
+                            <span class="text-emerald-400 font-bold block mb-2">【指定攻擊技能】</span>
+                            ${skillControl}
+                        </div>
+                        <div class="bg-black/40 border border-gray-800/80 rounded px-3 py-2.5">
+                            <span class="text-emerald-400 font-bold block mb-2">【常駐輔助施放】</span>
+                            <div class="flex flex-wrap gap-x-3 gap-y-2 mb-2">${autoSpellRows}</div>
+                            <!-- 72% 自動治療提示 -->
+                            <div class="text-[11px] text-yellow-500/90 border-t border-gray-800/80 pt-1.5">
+                                💡 隊友會優先治療血量低於 72% 的玩家、寵物或自己，並維持勾選之輔助效果。
                             </div>
-                            <!-- 中傷線 -->
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-amber-300 shrink-0">中傷:</span>
-                                <input type="number" min="1" max="100" value="${th2}" class="w-12 bg-black border border-gray-600 text-center text-white py-0.5 rounded text-xs" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold2', this.value)">
-                                <span>% 喝</span>
-                                <select class="bg-black border border-gray-600 text-white py-0.5 px-1 rounded text-xs flex-1" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType2', this.value)">${buildPotionOptions(type2)}</select>
+                        </div>
+                    </div>
+
+                    <!-- 三階段階梯式自動補給設定 (直式排列) -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-3 py-2.5 space-y-2">
+                        <span class="text-emerald-400 font-bold block">【階梯喝水與補給策略】</span>
+                        <div class="space-y-1.5 pb-2 border-b border-gray-800">
+                            <!-- 第 1 階 -->
+                            <div class="flex flex-wrap items-center gap-2 text-gray-200">
+                                <span>血量低於</span>
+                                <input type="number" min="1" max="100" value="${th1}" class="w-14 bg-black border border-gray-600 text-center text-white py-1 rounded text-xs focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold1', this.value); game.setCompanionConsumableSetting('${c.id}','autoHpThreshold', this.value);">
+                                <span>% 時，使用</span>
+                                <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-xs min-w-[140px] focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType1', this.value); game.setCompanionConsumableSetting('${c.id}','autoHpType', this.value);">${buildPotionOptions(type1)}</select>
                             </div>
-                            <!-- 救命線 -->
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-rose-400 shrink-0">救命:</span>
-                                <input type="number" min="1" max="100" value="${th3}" class="w-12 bg-black border border-gray-600 text-center text-white py-0.5 rounded text-xs" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold3', this.value)">
-                                <span>% 喝</span>
-                                <select class="bg-black border border-gray-600 text-white py-0.5 px-1 rounded text-xs flex-1" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType3', this.value)">${buildPotionOptions(type3)}</select>
+                            <!-- 第 2 階 -->
+                            <div class="flex flex-wrap items-center gap-2 text-gray-200">
+                                <span>血量低於</span>
+                                <input type="number" min="1" max="100" value="${th2}" class="w-14 bg-black border border-gray-600 text-center text-white py-1 rounded text-xs focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold2', this.value)">
+                                <span>% 時，使用</span>
+                                <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-xs min-w-[140px] focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType2', this.value)">${buildPotionOptions(type2)}</select>
+                            </div>
+                            <!-- 第 3 階 -->
+                            <div class="flex flex-wrap items-center gap-2 text-gray-200">
+                                <span>血量低於</span>
+                                <input type="number" min="1" max="100" value="${th3}" class="w-14 bg-black border border-gray-600 text-center text-white py-1 rounded text-xs focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold3', this.value)">
+                                <span>% 時，使用</span>
+                                <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-xs min-w-[140px] focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType3', this.value)">${buildPotionOptions(type3)}</select>
                             </div>
                         </div>
 
-                        <!-- 藥水補買 -->
-                        <div class="flex flex-wrap items-center gap-3 pt-1 text-gray-300">
-                            <label class="cursor-pointer hover:text-white flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" ${settings.autoBuyHp ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyHp', this.checked)"> <span>補買血水</span></label>
-                            <label class="cursor-pointer hover:text-white flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" ${settings.autoBuyMp ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyMp', this.checked)"> <span>藍水</span></label>
-                            <label class="cursor-pointer hover:text-white flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" ${settings.autoBuyWis ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyWis', this.checked)"> <span>慎重</span></label>
-                            <label class="cursor-pointer hover:text-white flex items-center gap-1"><input type="checkbox" class="w-3.5 h-3.5" ${settings.autoBuyHaste ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyHaste', this.checked)"> <span>加速</span></label>
-                            <label class="cursor-pointer hover:text-white flex items-center gap-1" title="${secondHasteName}"><input type="checkbox" class="w-3.5 h-3.5" ${settings.autoBuySecondHaste ? 'checked' : ''} ${secondHasteName.startsWith('無') ? 'disabled' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuySecondHaste', this.checked)"> <span>二段加速</span></label>
+                        <!-- 藥水補買勾選列 -->
+                        <div class="flex flex-wrap items-center gap-3.5 pt-1 text-gray-300">
+                            <label class="cursor-pointer hover:text-white flex items-center gap-1.5"><input type="checkbox" class="w-4 h-4 rounded" ${settings.autoBuyHp ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyHp', this.checked)"> <span>補買血水</span></label>
+                            <label class="cursor-pointer hover:text-white flex items-center gap-1.5"><input type="checkbox" class="w-4 h-4 rounded" ${settings.autoBuyMp ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyMp', this.checked)"> <span>藍水</span></label>
+                            <label class="cursor-pointer hover:text-white flex items-center gap-1.5"><input type="checkbox" class="w-4 h-4 rounded" ${settings.autoBuyWis ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyWis', this.checked)"> <span>慎重</span></label>
+                            <label class="cursor-pointer hover:text-white flex items-center gap-1.5"><input type="checkbox" class="w-4 h-4 rounded" ${settings.autoBuyHaste ? 'checked' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuyHaste', this.checked)"> <span>加速</span></label>
+                            <label class="cursor-pointer hover:text-white flex items-center gap-1.5" title="${secondHasteName}"><input type="checkbox" class="w-4 h-4 rounded" ${settings.autoBuySecondHaste ? 'checked' : ''} ${secondHasteName.startsWith('無') ? 'disabled' : ''} onchange="game.setCompanionConsumableSetting('${c.id}','autoBuySecondHaste', this.checked)"> <span>二段加速</span></label>
                         </div>
                     </div>
                 </div>
