@@ -8491,7 +8491,7 @@ Object.assign(game, {
             return `${this.getCompanionSlotName(row.slot)}:${this.getDisplayName(item, def)}`;
         }).join(' / ');
     },
-   getCompanionActiveDetailHtml: function(c) {
+  getCompanionActiveDetailHtml: function(c) {
         if (this.state.level < 30) return '<div class="c-sys italic bg-gray-900 border border-gray-800 rounded p-3">30 級後開放隊友系統。</div>';
         if (!c) return '<div class="c-sys italic bg-gray-900 border border-gray-800 rounded p-3">尚未召喚隊友。召喚後會在這裡顯示目前出戰隊友的詳細資料。</div>';
         const vitals = this.getCompanionVitalsView(c);
@@ -8503,19 +8503,19 @@ Object.assign(game, {
         const learnedSpells = this.getCompanionLearnedSpells(c);
         const attackOptions = this.getCompanionSkillOptions(c);
         const autoOptions = this.getCompanionAutoSpellOptions(c);
-        const buffText = this.getCompanionBuffNames(c).join(' / ') || '無';
+        const buffText = this.getCompanionBuffNames(c).join(' / ') || '無附加狀態';
         const skillText = c.autoSkill && c.autoSkill !== 'none' ? (SPELLS[c.autoSkill]?.name || c.autoSkill) : '無（使用普攻）';
         
-        // 核心修正 1：上方卡片吃進裝備屬性（敏捷 18 正式回歸！）
+        // 核心屬性（裝備加成正式結算）
         const statText = COMPANION_STATS.map(stat => `${this.getStatLabel(stat)} ${this.getCompanionEffectiveStat ? this.getCompanionEffectiveStat(c, stat) : c.stats[stat]}`).join(' / ');
         
         const learnedText = learnedSpells.length ? learnedSpells.map(id => SPELLS[id]?.name || id).join('、') : '尚未學習';
         const autoText = c.autoSpells?.length ? c.autoSpells.map(id => SPELLS[id]?.name || id).join('、') : '未勾選';
         const equipText = this.getCompanionEquipSummary(c);
         
-        // 核心修正 2：重構排版，將能力與技能自然流暢排列，徹底消滅多餘空白縫隙
         return `
             <div class="bg-gray-950 border border-yellow-800 rounded p-3 shadow-[0_0_12px_rgba(234,179,8,0.18)]">
+                <!-- 頂部身分與血條區 -->
                 <div class="flex flex-wrap justify-between gap-2 items-start mb-2">
                     <div>
                         <div class="${this.getCompanionRarityClass(c.rarity)} font-bold text-lg">${c.name} <span class="text-xs c-sys">${CLASSES[c.classId].name}</span></div>
@@ -8523,19 +8523,55 @@ Object.assign(game, {
                     </div>
                     <div class="text-xs c-info text-right">輔助與攻擊整合<br>攻擊技能：${skillText}</div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm mb-2">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm mb-3">
                     <div class="flex items-center">體力:<div class="bar-container flex-1"><div class="bar-fill hp" style="width:${Math.max(0, vitals.hp / maxHp * 100)}%;"></div><span class="bar-text">${Math.floor(vitals.hp)}/${maxHp}</span></div></div>
                     <div class="flex items-center">魔力:<div class="bar-container flex-1"><div class="bar-fill mp" style="width:${maxMp > 0 ? Math.max(0, vitals.mp / maxMp * 100) : 0}%;"></div><span class="bar-text">${Math.floor(vitals.mp)}/${maxMp}</span></div></div>
                     <div class="flex items-center">經驗:<div class="bar-container flex-1"><div class="bar-fill exp" style="width:${expPct}%;"></div><span class="bar-text">${req > 0 ? expPct.toFixed(2) + '%' : 'MAX'}</span></div></div>
                 </div>
-                <div class="space-y-1 text-xs c-sys">
-                    <div>能力：${statText}</div>
-                    <div>狀態：${buffText}</div>
-                    <div>攻擊技能可選：${attackOptions.length ? attackOptions.map(id => SPELLS[id]?.name || id).join('、') : '無'}</div>
-                    <div>輔助技能：${autoOptions.length ? autoText : '無可用輔助/補血'}</div>
-                    <div>技能：${learnedText}</div>
-                    <div>裝備：${equipText}</div>
-                    <div>消耗品：HP ${settings.autoHpThreshold}% / ${ITEMS[settings.autoHpType]?.name || '治癒藥水'} / 補買 ${settings.autoBuyHp ? '開' : '關'} / 藍水 ${settings.autoBuyMp ? '開' : '關'} / 慎重 ${settings.autoBuyWis ? '開' : '關'} / 加速 ${settings.autoBuyHaste ? '開' : '關'} / 二段 ${settings.autoBuySecondHaste ? '開' : '關'}</div>
+
+                <!-- 模組化獨立框框資訊區 -->
+                <div class="space-y-2 text-xs">
+                    <!-- 基本能力 -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span class="text-amber-400 font-bold shrink-0">【基本能力】</span>
+                        <span class="text-gray-200">${statText}</span>
+                    </div>
+
+                    <!-- 當前狀態 -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
+                        <div class="text-emerald-400 font-bold mb-1">【當前狀態】</div>
+                        <div class="text-gray-300 leading-relaxed">${buffText}</div>
+                    </div>
+
+                    <!-- 戰鬥技能 (雙欄對齊) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
+                            <span class="text-rose-400 font-bold">【攻擊技能】</span>
+                            <div class="text-gray-300 mt-1">${attackOptions.length ? attackOptions.map(id => SPELLS[id]?.name || id).join('、') : '無'}</div>
+                        </div>
+                        <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
+                            <span class="text-sky-400 font-bold">【輔助技能】</span>
+                            <div class="text-gray-300 mt-1">${autoOptions.length ? autoText : '無可用輔助/補血'}</div>
+                        </div>
+                    </div>
+
+                    <!-- 穿戴裝備 -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
+                        <span class="text-yellow-400 font-bold">【穿戴裝備】</span>
+                        <div class="text-gray-300 mt-1 leading-relaxed">${equipText}</div>
+                    </div>
+
+                    <!-- 已學技能 -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
+                        <span class="text-indigo-400 font-bold">【已學技能】</span>
+                        <div class="text-gray-300 mt-1 leading-relaxed">${learnedText}</div>
+                    </div>
+
+                    <!-- 自動補給 -->
+                    <div class="bg-black/40 border border-gray-800/80 rounded px-2.5 py-1.5">
+                        <span class="text-orange-400 font-bold">【自動補給】</span>
+                        <div class="text-gray-300 mt-1">HP ${settings.autoHpThreshold}% / ${ITEMS[settings.autoHpType]?.name || '治癒藥水'} / 補買 ${settings.autoBuyHp ? '開' : '關'} / 藍水 ${settings.autoBuyMp ? '開' : '關'} / 慎重 ${settings.autoBuyWis ? '開' : '關'} / 加速 ${settings.autoBuyHaste ? '開' : '關'} / 二段 ${settings.autoBuySecondHaste ? '開' : '關'}</div>
+                    </div>
                 </div>
             </div>`;
     },
