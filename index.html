@@ -9221,6 +9221,8 @@ getCompanionActiveDetailHtml: function(c) {
         }
         return false;
     },
+       // 【合體版 3】防禦性戰鬥補給引擎（動態閥值排序 + 缺錢防死鎖）
+    // ==========================================
     applyCompanionConsumables: function(c) {
         if (!c) return c;
         const companionId = c.id;
@@ -9229,18 +9231,58 @@ getCompanionActiveDetailHtml: function(c) {
             return c;
         };
         c.buffs = c.buffs && typeof c.buffs === 'object' ? c.buffs : {};
+        
         const settings = this.getCompanionSettings(c);
         const vitals = this.normalizeCompanionVitals(c, { minHp: 0 });
         const maxHp = vitals.maxHp;
+        
         c.potionCooldown = Math.max(0, parseInt(c.potionCooldown) || 0);
-        if (c.potionCooldown <= 0 && c.hp < maxHp && c.hp <= Math.floor(maxHp * settings.autoHpThreshold / 100)) {
-            let hpKey = this.findInventoryKeyByItemId(settings.autoHpType);
-            if (!hpKey && settings.autoBuyHp) { hpKey = this.buyCompanionConsumableIfNeeded(c, settings.autoHpType, 100); syncCompanion(); }
-            if (hpKey && this.usePotionOnCompanion(c, hpKey)) {
-                syncCompanion();
-                c.potionCooldown = 1;
+
+        if (c.potionCooldown <= 0 && c.hp < maxHp) {
+            const currentHpPct = (c.hp / maxHp) * 100;
+
+            // 1. 動態階梯正規化：蒐集所有配置並過濾有效規則
+            const rawTiers = [
+                { th: parseInt(settings.autoHpThreshold3 || 0), type: settings.autoHpType3 },
+                { th: parseInt(settings.autoHpThreshold2 || 0), type: settings.autoHpType2 },
+                { th: parseInt(settings.autoHpThreshold1 || settings.autoHpThreshold || 0), type: settings.autoHpType1 || settings.autoHpType }
+            ];
+
+            // 2. 核心防禦：依血量門檻由嚴苛到寬鬆（由小到大）排序，防止玩家數值倒掛設定
+            const validTiers = rawTiers
+                .filter(t => t.th > 0 && t.type && t.type !== 'none' && ITEMS[t.type]?.type === 'potion_hp')
+                .sort((a, b) => a.th - b.th);
+
+            // 3. 找出當前血量符合的最嚴苛門檻
+            let targetPotionType = null;
+            for (const tier of validTiers) {
+                if (currentHpPct <= tier.th) {
+                    targetPotionType = tier.type;
+                    break; // 命中最低血量區間，立即鎖定藥水
+                }
+            }
+
+            if (targetPotionType) {
+                let hpKey = this.findInventoryKeyByItemId(targetPotionType);
+                
+                // 背包無水時嘗試補買
+                if (!hpKey && settings.autoBuyHp) { 
+                    hpKey = this.buyCompanionConsumableIfNeeded(c, targetPotionType, 100); 
+                    syncCompanion(); 
+                }
+                
+                // 執行飲用
+                if (hpKey && this.usePotionOnCompanion(c, hpKey)) {
+                    syncCompanion();
+                    c.potionCooldown = 1;
+                } else {
+                    // 防禦機制：若因缺錢或無道具喝水失敗，強制賦予最小冷卻，防止同一秒無意義高頻空轉
+                    c.potionCooldown = 1;
+                }
             }
         }
+
+        // 維持輔助藥水施放邏輯
         const buffQueue = [
             { enabled: settings.autoBuyMp, itemId: 'potion_blue', buffId: 'potion_blue' },
             { enabled: settings.autoBuyWis, itemId: 'potion_wisdom', buffId: 'potion_wisdom' },
@@ -9248,12 +9290,14 @@ getCompanionActiveDetailHtml: function(c) {
         ];
         const secondHasteId = c.classId === 'knight' ? 'potion_courage' : (['elf','dark_elf'].includes(c.classId) ? 'elven_wafer' : null);
         if (secondHasteId) buffQueue.push({ enabled: settings.autoBuySecondHaste, itemId: secondHasteId, buffId: 'second_haste' });
+        
         buffQueue.forEach(row => {
             if (!row.enabled || c.buffs[row.buffId] > 0) return;
             let key = this.findInventoryKeyByItemId(row.itemId);
             if (!key) { key = this.buyCompanionConsumableIfNeeded(c, row.itemId, 1); syncCompanion(); }
             if (key && this.usePotionOnCompanion(c, key)) syncCompanion();
         });
+
         return syncCompanion();
     },
     advanceCompanionBuffs: function(c, seconds = 2) {
