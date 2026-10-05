@@ -3410,7 +3410,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     { id: 'armor_shadow', slots: ['armor'] }
                 ]
             },
-            {
+             {
                 name: '影子疾行套裝',
                 bonus: 'HP +50 / MR +5 / 遠攻迴避 ER +5',
                 parts: [
@@ -3419,6 +3419,26 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 ]
             }
         ];
+
+        // 👑【神秘 D 神的永恆共鳴】圖鑑登錄（13 級或持有時解鎖現身）
+        const hasDGodItem = Object.values(this.state.inventory || {}).some(it => it && it.itemId && it.itemId.startsWith('d_god_'));
+        if (this.state.level >= 13 || hasDGodItem) {
+            const isAwakened = this.state.level >= 35;
+            defs.push({
+                name: '【神諭】D 神的永恆共鳴',
+                bonus: isAwakened 
+                    ? '全期經驗值獲取 +10% / 近戰傷害 +5 / AC -2 (35級顯現)' 
+                    : '全期經驗值獲取 +10% / (35級顯現神域共鳴)',
+                parts: [
+                    { id: 'd_god_weapon', slots: ['weapon'] },
+                    { id: 'd_god_helm', slots: ['helmet'] },
+                    { id: 'd_god_armor', slots: ['armor'] },
+                    { id: 'd_god_gloves', slots: ['gloves'] }
+                ]
+            });
+        }
+
+        return defs;
     },
     getEquippedItemIdBySlot: function(slot) {
         const key = this.state.equipment?.[slot];
@@ -4474,7 +4494,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             // 全期常駐經驗值獲取 +10%
             sets.expRate += 0.10;
 
-            // 50 級成年禮覺醒：傷害 +5，防禦追加 -2 AC
+            // 35級顯現：傷害 +5，防禦追加 -2 AC
             if (this.state.level >= 35) {
                 sets.dmg += 5;
                 sets.ac += 2;
@@ -5131,6 +5151,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (sets.active.includes('冰之女王套裝')) ['weapon', 'earring1', 'earring2'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
         if (sets.active.includes('影子套裝')) ['cloak', 'armor'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
         if (sets.active.includes('影子疾行套裝')) ['gloves', 'boots'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
+        if (sets.active.includes('D 神的永恆共鳴')) ['weapon', 'helmet', 'armor', 'gloves'].forEach(s => activeSetItemKeys.push(this.state.equipment[s]));
 
         let equippedPairs = [];
         for(let slot in this.state.equipment) {
