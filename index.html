@@ -7411,11 +7411,15 @@ if(Math.random()*100 <= this.getER()) {
         return dropped;
     },
     monsterDied: function() {
-        let m = this.state.targetMonster;
+        llet m = this.state.targetMonster;
         let towerUnlockBefore = this.getUnlockedTowerFloor();
         this.recordMonsterKill(this.state.currentMap, m);
         this.markTowerBossDefeated(m);
-        let expGain = Math.floor(Math.max(0, m.exp || 0) * this.getAchievementExpMultiplier());
+    
+         // 👑【 小 G】注入：取得套裝純增量，嚴格杜絕全服翻倍 Bug
+        let setBonus = this.getSetBonuses();
+        let expGain = Math.floor(Math.max(0, m.exp || 0) * this.getAchievementExpMultiplier() * (1 + (setBonus.expBonus || 0)));
+    
         this.state.exp += expGain;
         this.gainPetExp(Math.max(1, Math.floor(expGain * (m.isBoss ? 0.18 : 0.35))));
         this.gainCompanionExp(Math.max(1, Math.floor(expGain * (m.isBoss ? 0.22 : 0.40))));
@@ -7827,7 +7831,11 @@ if(Math.random()*100 <= this.getER()) {
             if (!m) continue;
             this.recordMonsterKill(this.state.currentMap, m, 1, true);
             this.markTowerBossDefeated(m);
-            let exp = Math.floor(Math.max(0, m.exp || 0) * this.getAchievementExpMultiplier());
+            
+            // 👑【 小 G】注入：後台掛機同步對齊 1.10 倍套裝經驗加成
+            let setBonus = this.getSetBonuses();
+            let exp = Math.floor(Math.max(0, m.exp || 0) * this.getAchievementExpMultiplier() * (1 + (setBonus.expBonus || 0)));
+            
             this.state.exp += exp;
             expGain += exp;
             this.gainPetExp(Math.max(1, Math.floor(exp * 0.35)), true);
