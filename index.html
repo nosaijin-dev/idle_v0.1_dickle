@@ -9134,22 +9134,37 @@ getCompanionActiveDetailHtml: function(c) {
         c.companionModeV2 = true;
         this.renderCompanionStatus();
     },
+       // 【合體版 2】內政儲存（打字時僅記憶體寫入，絕不盲目全量重繪）
+    // ==========================================
     getCompanionSettings: function(c) {
         if (!c) return { ...COMPANION_DEFAULT_CONSUMABLE_SETTINGS };
         c.settings = { ...COMPANION_DEFAULT_CONSUMABLE_SETTINGS, ...(c.settings || {}) };
+        
         c.settings.autoHpThreshold = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold) || COMPANION_DEFAULT_CONSUMABLE_SETTINGS.autoHpThreshold));
         if (!ITEMS[c.settings.autoHpType] || ITEMS[c.settings.autoHpType].type !== 'potion_hp') c.settings.autoHpType = 'potion_red';
+        
+        c.settings.autoHpThreshold2 = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold2) || 0));
+        c.settings.autoHpThreshold3 = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold3) || 0));
+        if (c.settings.autoHpType2 && (!ITEMS[c.settings.autoHpType2] || ITEMS[c.settings.autoHpType2].type !== 'potion_hp')) c.settings.autoHpType2 = 'none';
+        if (c.settings.autoHpType3 && (!ITEMS[c.settings.autoHpType3] || ITEMS[c.settings.autoHpType3].type !== 'potion_hp')) c.settings.autoHpType3 = 'none';
+
         ['autoBuyHp','autoBuyMp','autoBuyWis','autoBuyHaste','autoBuySecondHaste'].forEach(key => c.settings[key] = !!c.settings[key]);
         return c.settings;
     },
+    
     setCompanionConsumableSetting: function(id, key, value) {
         const c = this.state.companions?.[id];
         if (!c) return;
         const settings = this.getCompanionSettings(c);
-        if (key === 'autoHpThreshold') settings.autoHpThreshold = Math.max(1, Math.min(100, parseInt(value) || COMPANION_DEFAULT_CONSUMABLE_SETTINGS.autoHpThreshold));
-        else if (key === 'autoHpType' && ITEMS[value]?.type === 'potion_hp') settings.autoHpType = value;
-        else if (Object.prototype.hasOwnProperty.call(COMPANION_DEFAULT_CONSUMABLE_SETTINGS, key)) settings[key] = !!value;
-        this.renderCompanions();
+        
+        if (['autoHpThreshold', 'autoHpThreshold1', 'autoHpThreshold2', 'autoHpThreshold3'].includes(key)) {
+            settings[key] = Math.max(1, Math.min(100, parseInt(value) || 0));
+        } else if (['autoHpType', 'autoHpType1', 'autoHpType2', 'autoHpType3'].includes(key)) {
+            settings[key] = value;
+        } else {
+            settings[key] = !!value;
+        }
+        // ⚖️ 完美收斂：打字儲存時不盲目呼叫全量重繪，徹底根除失焦 Bug！
     },
     findInventoryKeyByItemId: function(itemId) {
         return Object.keys(this.state.inventory || {}).find(k => this.state.inventory[k]?.itemId === itemId && this.state.inventory[k].count > 0) || null;
