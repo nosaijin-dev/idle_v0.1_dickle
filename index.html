@@ -9272,25 +9272,24 @@ getCompanionActiveDetailHtml: function(c) {
         c.locked = !c.locked;
         this.renderCompanions();
     },
-       // 【合體版 1】彈窗與解雇邏輯（瞬態銷毀 + 炫彩品級 + 保留金幣退還）
-    // ==========================================
+     // 專屬黑金品級確認彈窗大腦 (字體放大升級版)
     showDismissConfirmModal: function(title, contentHtml, onConfirm) {
         let modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4';
+        modal.className = 'fixed inset-0 bg-black/85 z-[9999] flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-gray-950 border border-yellow-700/90 rounded-lg max-w-md w-full p-5 shadow-[0_0_25px_rgba(234,179,8,0.3)] text-center">
-                <div class="text-base font-bold text-yellow-500 mb-3 border-b border-gray-800 pb-2">${title || '解雇確認'}</div>
-                <div class="text-sm text-gray-200 mb-5 leading-relaxed">${contentHtml}</div>
-                <div class="flex justify-center gap-3">
-                    <button id="modal-dismiss-cancel" class="btn-ui !px-4 !py-1.5 text-xs c-sys border-gray-700 hover:text-white">取消</button>
-                    <button id="modal-dismiss-confirm" class="btn-ui c-err border-red-800 !px-5 !py-1.5 text-xs font-bold">確定解雇</button>
+            <div class="bg-gray-950 border border-yellow-700/90 rounded-xl max-w-md w-full p-6 shadow-[0_0_30px_rgba(234,179,8,0.35)] text-center">
+                <div class="text-lg font-bold text-yellow-500 mb-3.5 border-b border-gray-800 pb-2.5 tracking-wide">${title || '解雇隊友確認'}</div>
+                <div class="text-sm md:text-base text-gray-200 mb-6 leading-relaxed text-left">${contentHtml}</div>
+                <div class="flex justify-center gap-4">
+                    <button id="modal-dismiss-cancel" class="btn-ui !px-5 !py-2 text-sm c-sys border-gray-700 hover:text-white">取消</button>
+                    <button id="modal-dismiss-confirm" class="btn-ui c-err border-red-800 !px-6 !py-2 text-sm font-bold">確定解雇</button>
                 </div>
             </div>`;
         document.body.appendChild(modal);
 
         const cancelBtn = modal.querySelector('#modal-dismiss-cancel');
         const confirmBtn = modal.querySelector('#modal-dismiss-confirm');
-        const closeModal = () => modal.remove(); // 完畢後直接從網頁樹拔除，徹底銷毀垃圾回收
+        const closeModal = () => modal.remove();
 
         cancelBtn.onclick = closeModal;
         confirmBtn.onclick = () => {
@@ -9299,7 +9298,7 @@ getCompanionActiveDetailHtml: function(c) {
         };
     },
 
-    // 單人解雇 (自帶炫彩品級標註 + 金幣退款提示)
+    // 單人解雇 (標題統一為「解雇隊友確認」+ 內文字體放大)
     dismissCompanion: function(id) {
         const c = this.state.companions?.[id];
         if (!c) return;
@@ -9311,9 +9310,9 @@ getCompanionActiveDetailHtml: function(c) {
         const rarityClass = this.getCompanionRarityClass(c.rarity);
         
         const contentHtml = `
-            <div>你確定要解雇 <span class="${rarityClass} font-bold text-base">${c.name}</span> <span class="text-xs text-gray-400">(${c.rarity})</span> 嗎？</div>
-            <div class="text-xs text-yellow-400 mt-2">💰 解雇可取回金幣：<span class="font-bold">${refund.toLocaleString()}</span></div>
-            <div class="text-xs text-red-400 mt-2">⚠️ 解雇後該隊友將永遠離隊，無法復原！</div>
+            <div class="text-sm md:text-base">你確定要解雇 <span class="${rarityClass} font-bold text-lg">${c.name}</span> <span class="text-sm text-gray-400">(${c.rarity})</span> 嗎？</div>
+            <div class="text-sm text-yellow-400 mt-3">💰 解雇可取回金幣：<span class="font-bold text-base text-yellow-300">${refund.toLocaleString()}</span></div>
+            <div class="text-xs text-red-400 mt-2.5">⚠️ 解雇後該隊友將永遠離隊，無法復原！</div>
         `;
         
         this.showDismissConfirmModal('解雇隊友確認', contentHtml, () => {
@@ -9327,12 +9326,12 @@ getCompanionActiveDetailHtml: function(c) {
         });
     },
 
-    // 批量解雇未鎖定隊友 (列出名冊 + 統計總退還金幣)
+    // 批量解雇未鎖定隊友 (標題同樣統一為「解雇隊友確認」+ 徽章字體清晰大號)
     dismissUnlockedCompanions: function() {
         const unlocked = Object.values(this.state.companions || {}).filter(c => {
             const isLocked = !!c.locked;
             const isActive = String(c.id) === String(this.state.activeCompanion);
-            return !isLocked && !isActive; // 出戰中無論有無鎖定，絕對安全保留
+            return !isLocked && !isActive;
         });
         
         if (unlocked.length === 0) {
@@ -9340,28 +9339,26 @@ getCompanionActiveDetailHtml: function(c) {
             return;
         }
 
-        // 計算總退還金幣
         let totalRefund = 0;
         unlocked.forEach(c => {
             totalRefund += (typeof COMPANION_DISMISS_ADENA !== 'undefined' ? COMPANION_DISMISS_ADENA[c.rarity] : 0) || 0;
         });
 
-        // 產生隊友炫彩徽章
         const listHtml = unlocked.map(c => {
             const rarityClass = this.getCompanionRarityClass(c.rarity);
-            return `<span class="inline-block bg-black/60 border border-gray-800 rounded px-2 py-1 text-xs mr-1.5 mb-1.5"><span class="${rarityClass} font-bold">${c.name}</span> <span class="text-gray-400">(${c.rarity})</span></span>`;
+            return `<span class="inline-block bg-black/60 border border-gray-800 rounded px-2.5 py-1 text-xs mr-2 mb-2"><span class="${rarityClass} font-bold text-sm">${c.name}</span> <span class="text-gray-400 text-xs">(${c.rarity})</span></span>`;
         }).join('');
 
         const contentHtml = `
-            <div class="mb-2">你確定要一次解雇以下 <span class="text-yellow-400 font-bold">${unlocked.length}</span> 位未鎖定隊友嗎？</div>
-            <div class="max-h-40 overflow-y-auto bg-black/40 border border-gray-800 rounded p-2.5 text-left mb-2.5" style="scrollbar-width: thin; scrollbar-color: #4b5563 #000;">
+            <div class="text-sm md:text-base mb-2.5">你確定要一次解雇以下 <span class="text-yellow-400 font-bold text-base">${unlocked.length}</span> 位未鎖定隊友嗎？</div>
+            <div class="max-h-44 overflow-y-auto bg-black/40 border border-gray-800 rounded p-3 text-left mb-3" style="scrollbar-width: thin; scrollbar-color: #4b5563 #000;">
                 ${listHtml}
             </div>
-            <div class="text-xs text-yellow-400 mb-2">💰 預計取回總金幣：<span class="font-bold text-sm text-yellow-300">${totalRefund.toLocaleString()}</span></div>
+            <div class="text-sm text-yellow-400 mb-2">💰 預計取回總金幣：<span class="font-bold text-base text-yellow-300">${totalRefund.toLocaleString()}</span></div>
             <div class="text-xs text-red-400">⚠️ 解雇後所有名單上的隊友將永遠離隊，無法復原！</div>
         `;
 
-        this.showDismissConfirmModal('批量解雇確認', contentHtml, () => {
+        this.showDismissConfirmModal('解雇隊友確認', contentHtml, () => {
             unlocked.forEach(c => {
                 delete this.state.companions[c.id];
             });
