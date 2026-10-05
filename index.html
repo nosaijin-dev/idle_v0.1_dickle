@@ -9272,34 +9272,105 @@ getCompanionActiveDetailHtml: function(c) {
         c.locked = !c.locked;
         this.renderCompanions();
     },
+       // 【合體版 1】彈窗與解雇邏輯（瞬態銷毀 + 炫彩品級 + 保留金幣退還）
+    // ==========================================
+    showDismissConfirmModal: function(title, contentHtml, onConfirm) {
+        let modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-gray-950 border border-yellow-700/90 rounded-lg max-w-md w-full p-5 shadow-[0_0_25px_rgba(234,179,8,0.3)] text-center">
+                <div class="text-base font-bold text-yellow-500 mb-3 border-b border-gray-800 pb-2">${title || '解雇確認'}</div>
+                <div class="text-sm text-gray-200 mb-5 leading-relaxed">${contentHtml}</div>
+                <div class="flex justify-center gap-3">
+                    <button id="modal-dismiss-cancel" class="btn-ui !px-4 !py-1.5 text-xs c-sys border-gray-700 hover:text-white">取消</button>
+                    <button id="modal-dismiss-confirm" class="btn-ui c-err border-red-800 !px-5 !py-1.5 text-xs font-bold">確定解雇</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+
+        const cancelBtn = modal.querySelector('#modal-dismiss-cancel');
+        const confirmBtn = modal.querySelector('#modal-dismiss-confirm');
+        const closeModal = () => modal.remove(); // 完畢後直接從網頁樹拔除，徹底銷毀垃圾回收
+
+        cancelBtn.onclick = closeModal;
+        confirmBtn.onclick = () => {
+            closeModal();
+            if (typeof onConfirm === 'function') onConfirm();
+        };
+    },
+
+    // 單人解雇 (自帶炫彩品級標註 + 金幣退款提示)
     dismissCompanion: function(id) {
         const c = this.state.companions?.[id];
-        if (!c || c.locked) {
+        if (!c) return;
+        if (c.locked) {
             this.logSystem('鎖定的隊友不會被解雇。', 'danger');
             return;
         }
-        const refund = COMPANION_DISMISS_ADENA[c.rarity] || 0;
-        if (this.state.activeCompanion === id) this.state.activeCompanion = null;
-        delete this.state.companions[id];
-        this.state.adena += refund;
-        this.logSystem(`解雇了 ${c.name}，取回 ${refund.toLocaleString()} 金幣。`, 'reward');
-        this.renderCompanions();
-        this.updateUI();
-    },
-    dismissUnlockedCompanions: function() {
-        let refund = 0, count = 0;
-        Object.keys(this.state.companions || {}).forEach(id => {
-            const c = this.state.companions[id];
-            if (!c || c.locked) return;
-            refund += COMPANION_DISMISS_ADENA[c.rarity] || 0;
-            if (this.state.activeCompanion === id) this.state.activeCompanion = null;
+        const refund = (typeof COMPANION_DISMISS_ADENA !== 'undefined' ? COMPANION_DISMISS_ADENA[c.rarity] : 0) || 0;
+        const rarityClass = this.getCompanionRarityClass(c.rarity);
+        
+        const contentHtml = `
+            <div>你確定要解雇 <span class="${rarityClass} font-bold text-base">${c.name}</span> <span class="text-xs text-gray-400">(${c.rarity})</span> 嗎？</div>
+            <div class="text-xs text-yellow-400 mt-2">💰 解雇可取回金幣：<span class="font-bold">${refund.toLocaleString()}</span></div>
+            <div class="text-xs text-red-400 mt-2">⚠️ 解雇後該隊友將永遠離隊，無法復原！</div>
+        `;
+        
+        this.showDismissConfirmModal('解雇隊友確認', contentHtml, () => {
+            if (String(this.state.activeCompanion) === String(id)) this.unsummonCompanion();
             delete this.state.companions[id];
-            count++;
+            this.state.adena = (this.state.adena || 0) + refund;
+            this.logSystem(`解雇了 ${c.name} (${c.rarity})，取回 ${refund.toLocaleString()} 金幣。`, 'reward');
+            this.updateUI();
+            this.renderCompanions();
+            this.renderCompanionStatus();
         });
-        this.state.adena += refund;
-        this.logSystem(`解雇未鎖定隊友 ${count} 名，取回 ${refund.toLocaleString()} 金幣。`, count ? 'reward' : 'normal');
-        this.renderCompanions();
-        this.updateUI();
+    },
+
+    // 批量解雇未鎖定隊友 (列出名冊 + 統計總退還金幣)
+    dismissUnlockedCompanions: function() {
+        const unlocked = Object.values(this.state.companions || {}).filter(c => {
+            const isLocked = !!c.locked;
+            const isActive = String(c.id) === String(this.state.activeCompanion);
+            return !isLocked && !isActive; // 出戰中無論有無鎖定，絕對安全保留
+        });
+        
+        if (unlocked.length === 0) {
+            this.logSystem('目前沒有可解雇的未鎖定後備隊友。', 'warn');
+            return;
+        }
+
+        // 計算總退還金幣
+        let totalRefund = 0;
+        unlocked.forEach(c => {
+            totalRefund += (typeof COMPANION_DISMISS_ADENA !== 'undefined' ? COMPANION_DISMISS_ADENA[c.rarity] : 0) || 0;
+        });
+
+        // 產生隊友炫彩徽章
+        const listHtml = unlocked.map(c => {
+            const rarityClass = this.getCompanionRarityClass(c.rarity);
+            return `<span class="inline-block bg-black/60 border border-gray-800 rounded px-2 py-1 text-xs mr-1.5 mb-1.5"><span class="${rarityClass} font-bold">${c.name}</span> <span class="text-gray-400">(${c.rarity})</span></span>`;
+        }).join('');
+
+        const contentHtml = `
+            <div class="mb-2">你確定要一次解雇以下 <span class="text-yellow-400 font-bold">${unlocked.length}</span> 位未鎖定隊友嗎？</div>
+            <div class="max-h-40 overflow-y-auto bg-black/40 border border-gray-800 rounded p-2.5 text-left mb-2.5" style="scrollbar-width: thin; scrollbar-color: #4b5563 #000;">
+                ${listHtml}
+            </div>
+            <div class="text-xs text-yellow-400 mb-2">💰 預計取回總金幣：<span class="font-bold text-sm text-yellow-300">${totalRefund.toLocaleString()}</span></div>
+            <div class="text-xs text-red-400">⚠️ 解雇後所有名單上的隊友將永遠離隊，無法復原！</div>
+        `;
+
+        this.showDismissConfirmModal('批量解雇確認', contentHtml, () => {
+            unlocked.forEach(c => {
+                delete this.state.companions[c.id];
+            });
+            this.state.adena = (this.state.adena || 0) + totalRefund;
+            this.logSystem(`解雇未鎖定隊友 ${unlocked.length} 名，取回 ${totalRefund.toLocaleString()} 金幣。`, 'reward');
+            this.updateUI();
+            this.renderCompanions();
+            this.renderCompanionStatus();
+        });
     },
     getCompanionEquipSlot: function(c, itemKey) {
         const item = this.state.inventory[itemKey], def = item && ITEMS[item.itemId];
