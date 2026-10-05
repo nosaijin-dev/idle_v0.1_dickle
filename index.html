@@ -4463,7 +4463,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             let k = this.state.equipment[slot];
             if(k && this.state.inventory[k]) eq[slot] = this.state.inventory[k].itemId;
         }
-        let sets = { active: [], ac: 0, hp: 0, mp: 0, dmg: 0, hit: 0, dr: 0, mr: 0, mDmg: 0, mpRegen: 0, critDmg: 0, er: 0, expRate: 1.0 };
+        let sets = { active: [], ac: 0, hp: 0, mp: 0, dmg: 0, hit: 0, dr: 0, mr: 0, mDmg: 0, mpRegen: 0, critDmg: 0, er: 0, expBonus: 0.0 };
         
         if(eq.helmet === 'helm_dk' && eq.armor === 'armor_dk' && eq.gloves === 'gloves_dk' && eq.boots === 'boots_dk') {
             sets.active.push('死亡騎士套裝'); sets.ac += 6; sets.dr += 3; sets.dmg += 3; sets.hit += 3;
@@ -4493,10 +4493,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         // ==========================================
         // 👑【神秘 D 神的永恆共鳴】套裝結算 (35級成年禮)
         // ==========================================
-        if(eq.weapon === 'd_god_weapon' && eq.helmet === 'd_god_helm' && eq.armor === 'd_god_armor' && eq.gloves === 'd_god_gloves') {
+        if(eq.weapon === 'd_god_weapon' && eq.helmet === 'd_god_helm' && eq.armor === 'd_god_armor' && eq.gloves === 'd_god_glove') {
             sets.active.push('D 神的永恆共鳴');
-            sets.expRate += 0.10;
+            // 全期常駐經驗值獲取 +10% 純增量
+            sets.expBonus += 0.10;
 
+            // 35 級顯現
             if (this.state.level >= 35) {
                 sets.dmg += 5;
                 sets.ac += 2;
