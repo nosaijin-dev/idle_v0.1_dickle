@@ -608,6 +608,17 @@ for(let i=76; i<=90; i++) {
     EXP_TABLE[i] = Math.min(LATE_EXP_CAP, Math.floor(EXP_TABLE[i-1] * growth));
 }
 
+// ⚡ 神秘 D 神裝備專用：神力衰退比例計算核心
+// 13級前 100% 神力；35級提早功成身退，保留 5% 保底神力
+// ==========================================
+const getDGodRatio = function(level) {
+    const startLv = 13;
+    const endLv = 35; // 35級接軌卡利普兌換！
+    const lv = Number(level) || 1;
+    if (lv <= startLv) return 1.0;
+    if (lv >= endLv) return 0.05;
+    return 1.0 - ((lv - startLv) / (endLv - startLv)) * 0.95;
+};    
 const ITEMS = {
     dagger_orc: { name: '歐西斯匕首', type: 'weapon', hands: 1, speed: 800, safe: 6, dice: '1d3', hit: 2, dropRate: 1 },
     short_sword_orc: { name: '歐西斯短劍', type: 'weapon', hands: 1, speed: 900, safe: 6, dice: '1d4', hit: 0, dropRate: 5 },
