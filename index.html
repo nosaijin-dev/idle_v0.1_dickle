@@ -8558,25 +8558,38 @@ getCompanionActiveDetailHtml: function(c) {
             return `<span class="inline-flex items-center gap-1.5 bg-black/60 border border-gray-800 rounded px-2.5 py-1 text-xs text-yellow-300 mr-2 mb-1.5">${this.getCompanionSlotName(slot)}: ${this.getDisplayName(item, def)} <button class="btn-ui !px-1.5 !py-0 text-xs c-err" onclick="game.unequipCompanionItem('${c.id}','${slot}')">卸</button></span>`;
         }).join('') || '<span class="text-xs text-gray-500">未穿戴任何裝備</span>';
 
-        // 4. 動態藥水選項產生器 (自 ITEMS 掃描)
-        const buildPotionOptions = (selectedId) => {
+       // 4. 動態藥水選項產生器 (支援加入「無（不設定）」選項)
+        const buildPotionOptions = (selectedId, allowNone = false) => {
             const list = (typeof ITEMS !== 'undefined')
                 ? Object.entries(ITEMS)
                     .filter(([id, item]) => item && item.type === 'potion_hp')
                     .map(([id, item]) => ({ id, name: item.name, heal: item.heal || 0 }))
                     .sort((a, b) => a.heal - b.heal)
                 : [];
-            if (!list.length) return `<option value="${selectedId}">${selectedId}</option>`;
-            return list.map(p => `<option value="${p.id}" ${selectedId === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
+            
+            let optionsHtml = '';
+            // 若允許不設定，在最上方插入「無」
+            if (allowNone) {
+                optionsHtml += `<option value="none" ${selectedId === 'none' ? 'selected' : ''}>無（不設定）</option>`;
+            }
+
+            if (!list.length) {
+                return optionsHtml + `<option value="${selectedId}">${selectedId}</option>`;
+            }
+            return optionsHtml + list.map(p => `<option value="${p.id}" ${selectedId === p.id ? 'selected' : ''}>${p.name}</option>`).join('');
         };
         const secondHasteName = c.classId === 'knight' ? '勇氣藥水' : (['elf','dark_elf'].includes(c.classId) ? '精靈餅乾' : '無職業可用道具');
 
-        const th1 = settings.autoHpThreshold1 ?? settings.autoHpThreshold ?? 80;
+       const th1 = settings.autoHpThreshold1 ?? settings.autoHpThreshold ?? 80;
         const type1 = settings.autoHpType1 ?? settings.autoHpType ?? 'potion_red';
-        const th2 = settings.autoHpThreshold2 ?? 60;
-        const type2 = settings.autoHpType2 ?? 'potion_orange';
-        const th3 = settings.autoHpThreshold3 ?? 40;
-        const type3 = settings.autoHpType3 ?? 'potion_clear';
+        
+        let rawTh2 = parseInt(settings.autoHpThreshold2);
+        const th2 = (!rawTh2 || rawTh2 <= 1) ? 50 : rawTh2;
+        const type2 = settings.autoHpType2 || 'potion_orange';
+
+        let rawTh3 = parseInt(settings.autoHpThreshold3);
+        const th3 = (!rawTh3 || rawTh3 <= 1) ? 20 : rawTh3;
+        const type3 = settings.autoHpType3 || 'potion_clear';
 
         return `
             <div>
@@ -8656,14 +8669,14 @@ getCompanionActiveDetailHtml: function(c) {
                                 <span>血量低於</span>
                                 <input type="number" min="1" max="100" value="${th2}" class="w-14 bg-black border border-gray-600 text-center text-white py-1 rounded text-xs focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold2', this.value)">
                                 <span>% 時，使用</span>
-                                <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-xs min-w-[140px] focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType2', this.value)">${buildPotionOptions(type2)}</select>
+                                <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-xs min-w-[140px] focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType2', this.value)">${buildPotionOptions(type2, true)}</select>
                             </div>
                             <!-- 第 3 階 -->
                             <div class="flex flex-wrap items-center gap-2 text-gray-200">
                                 <span>血量低於</span>
                                 <input type="number" min="1" max="100" value="${th3}" class="w-14 bg-black border border-gray-600 text-center text-white py-1 rounded text-xs focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpThreshold3', this.value)">
                                 <span>% 時，使用</span>
-                                <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-xs min-w-[140px] focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType3', this.value)">${buildPotionOptions(type3)}</select>
+                                <select class="bg-black border border-gray-600 text-white py-1 px-2 rounded text-xs min-w-[140px] focus:border-yellow-500" onchange="game.setCompanionConsumableSetting('${c.id}','autoHpType3', this.value)">${buildPotionOptions(type3, true)}</select>
                             </div>
                         </div>
 
@@ -9143,10 +9156,10 @@ getCompanionActiveDetailHtml: function(c) {
         c.settings.autoHpThreshold = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold) || COMPANION_DEFAULT_CONSUMABLE_SETTINGS.autoHpThreshold));
         if (!ITEMS[c.settings.autoHpType] || ITEMS[c.settings.autoHpType].type !== 'potion_hp') c.settings.autoHpType = 'potion_red';
         
-        c.settings.autoHpThreshold2 = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold2) || 0));
-        c.settings.autoHpThreshold3 = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold3) || 0));
-        if (c.settings.autoHpType2 && (!ITEMS[c.settings.autoHpType2] || ITEMS[c.settings.autoHpType2].type !== 'potion_hp')) c.settings.autoHpType2 = 'none';
-        if (c.settings.autoHpType3 && (!ITEMS[c.settings.autoHpType3] || ITEMS[c.settings.autoHpType3].type !== 'potion_hp')) c.settings.autoHpType3 = 'none';
+       c.settings.autoHpThreshold2 = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold2) || 50));
+       c.settings.autoHpThreshold3 = Math.max(1, Math.min(100, parseInt(c.settings.autoHpThreshold3) || 20));
+       if (c.settings.autoHpType2 === undefined) c.settings.autoHpType2 = 'potion_orange';
+       if (c.settings.autoHpType3 === undefined) c.settings.autoHpType3 = 'potion_clear';
 
         ['autoBuyHp','autoBuyMp','autoBuyWis','autoBuyHaste','autoBuySecondHaste'].forEach(key => c.settings[key] = !!c.settings[key]);
         return c.settings;
