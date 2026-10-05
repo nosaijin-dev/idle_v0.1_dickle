@@ -3644,12 +3644,13 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (def.type === 'weapon') {
             let maxAtk = def.dice ? def.dice.split('+')[0].split('d').pop() : '';
             if (maxAtk) statParts.push(`攻擊力: ${maxAtk}`);
+            if (def.dmg) statParts.push(`額外傷害: +${def.dmg}`);
             if (def.hands) statParts.push(def.hands === 2 ? '雙手' : '單手');
         }
         if (def.ac !== undefined && def.ac !== 0) statParts.push(`防禦力: ${def.ac}`);
         if (def.safe !== undefined) statParts.push(`安定值: ${def.safe}`);
 
-        // 🎯 2. 直接透過通用字典表一秒解析出所有額外屬性！
+        // 🎯 2. 直接透過通用字典表解析額外屬性！
         let bonusParts = this.formatItemBonuses(def);
 
         let allStats = [...statParts, ...bonusParts];
@@ -3665,25 +3666,42 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             </div>
         `;
 
-        // 3. 掉落來源清單
+        // 3. 掉落來源清單（🌟 方案 A 尊榮升級：支援專屬特殊獲取途徑！）
         let sources = result.sources || [];
-        let sourceHtml = sources.length ? sources.slice(0, 10).map(source => {
-            let rateText = this.formatDropRate(source.rate);
-            let countText = source.count > 1 ? ` x${source.count}` : '';
-            return `
-                <div class="flex justify-between gap-2 text-xs border-b border-gray-800 py-1">
-                    <span class="min-w-0"><span class="c-info">${this.escapeHtml(source.mapName)}</span> / <span class="${source.isBoss ? 'c-err' : 'c-item'}">${this.escapeHtml(source.monsterName)}</span><span class="c-sys"> Lv.${source.level}</span></span>
-                    <span class="c-warn whitespace-nowrap">${rateText}${countText}</span>
+        let sourceHtml = '';
+        let tagRight = sources.length ? `${sources.length}來源` : '非掉落';
+
+        if (def.obtainDesc) {
+            tagRight = '特殊神物';
+            sourceHtml = `
+                <div class="mt-2.5 p-2.5 bg-yellow-950/30 border border-yellow-700/60 rounded text-xs text-yellow-300 leading-relaxed shadow-[0_0_10px_rgba(234,179,8,0.1)]">
+                    <div class="font-bold text-yellow-400 mb-1 flex items-center gap-1.5">
+                        <span>⚡【特殊獲取途徑】</span>
+                    </div>
+                    <div>${this.escapeHtml(def.obtainDesc)}</div>
                 </div>
             `;
-        }).join('') : '<div class="text-xs c-sys mt-2">未列於怪物掉落</div>';
-        if (sources.length > 10) sourceHtml += `<div class="text-xs c-sys mt-1">另 ${sources.length - 10} 筆來源</div>`;
+        } else if (sources.length) {
+            sourceHtml = sources.slice(0, 10).map(source => {
+                let rateText = this.formatDropRate(source.rate);
+                let countText = source.count > 1 ? ` x${source.count}` : '';
+                return `
+                    <div class="flex justify-between gap-2 text-xs border-b border-gray-800 py-1">
+                        <span class="min-w-0"><span class="c-info">${this.escapeHtml(source.mapName)}</span> / <span class="${source.isBoss ? 'c-err' : 'c-item'}">${this.escapeHtml(source.monsterName)}</span><span class="c-sys"> Lv.${source.level}</span></span>
+                        <span class="c-warn whitespace-nowrap">${rateText}${countText}</span>
+                    </div>
+                `;
+            }).join('');
+            if (sources.length > 10) sourceHtml += `<div class="text-xs c-sys mt-1">另 ${sources.length - 10} 筆來源</div>`;
+        } else {
+            sourceHtml = '<div class="text-xs c-sys mt-2">未列於怪物掉落</div>';
+        }
 
         return `
             <div class="border border-gray-800 bg-gray-900 rounded p-3">
                 <div class="flex justify-between gap-2">
                     <span class="${color} font-bold min-w-0">${got ? '✓' : '□'} ${this.escapeHtml(def.name)}</span>
-                    <span class="text-xs c-sys whitespace-nowrap">${sources.length ? sources.length + '來源' : '非掉落'}</span>
+                    <span class="text-xs c-warn whitespace-nowrap font-medium">${tagRight}</span>
                 </div>
                 ${infoBoxHtml}
                 <div class="mt-2">${sourceHtml}</div>
