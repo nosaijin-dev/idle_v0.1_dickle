@@ -4467,7 +4467,20 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         }
         if(eq.gloves === 'gloves_shadow' && eq.boots === 'boots_shadow') {
             sets.active.push('影子疾行套裝'); sets.hp += 50; sets.mr += 5; sets.er += 5;
+         // 👑【神秘 D 神的永恆共鳴】套裝結算
+        // ==========================================
+        if(eq.weapon === 'd_god_weapon' && eq.helmet === 'd_god_helm' && eq.armor === 'd_god_armor' && eq.gloves === 'd_god_gloves') {
+            sets.active.push('D 神的永恆共鳴');
+            // 全期常駐經驗值獲取 +10%
+            sets.expRate += 0.10;
+
+            // 50 級成年禮覺醒：傷害 +5，防禦追加 -2 AC
+            if (this.state.level >= 35) {
+                sets.dmg += 5;
+                sets.ac += 2;
+            }
         }
+
         return sets;
     },
 
