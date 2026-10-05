@@ -3644,7 +3644,6 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (def.type === 'weapon') {
             let maxAtk = def.dice ? def.dice.split('+')[0].split('d').pop() : '';
             if (maxAtk) statParts.push(`攻擊力: ${maxAtk}`);
-            if (def.dmg) statParts.push(`額外傷害: +${def.dmg}`);
             if (def.hands) statParts.push(def.hands === 2 ? '雙手' : '單手');
         }
         if (def.ac !== undefined && def.ac !== 0) statParts.push(`防禦力: ${def.ac}`);
