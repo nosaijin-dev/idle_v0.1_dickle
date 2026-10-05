@@ -9014,13 +9014,13 @@ getCompanionActiveDetailHtml: function(c) {
 
         return `
             <div class="companion-card border border-gray-800 hover:border-gray-700 bg-gray-950 p-3.5 rounded shadow transition">
-                <div class="flex justify-between items-start gap-2">
+                <div class="flex justify-between items-center gap-2">
                     <div>
                         <div class="${this.getCompanionRarityClass(c.rarity)} font-bold text-lg">${c.name} <span class="text-xs c-sys">${CLASSES[c.classId].name}</span></div>
                         <div class="text-xs c-sys mt-0.5">${c.rarity} / Lv.${this.getCompanionLevel(c)} / HP ${Math.floor(vitals.hp)}/${maxHp} / MP ${Math.floor(vitals.mp)}/${maxMp} / EXP ${req > 0 ? expPct.toFixed(1) + '%' : 'MAX'}</div>
                     </div>
                     <!-- 鎖定狀態清晰按鈕 -->
-                    <button class="btn-ui !px-2.5 !py-1 text-xs ${lockButtonClass}" onclick="game.toggleCompanionLock('${c.id}')">${lockButtonText}</button>
+                    <button class="btn-ui !px-2.5 !py-1 text-xs whitespace-nowrap shrink-0 font-medium ${lockButtonClass}" onclick="game.toggleCompanionLock('${c.id}')">${lockButtonText}</button>
                 </div>
                 
                 <!-- 基本能力：標籤正名 -->
