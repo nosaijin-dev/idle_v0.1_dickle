@@ -6697,7 +6697,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     dynamicBonus: upgradeData.bonus
                 });
             } else {
-                this.addItem('reborn_badge', 1);
+                this.addInventory('reborn_badge', 1);
             }
         }
 
@@ -6733,7 +6733,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                             stage.className = stage.className.replace('bg-red-950/40', 'bg-yellow-950/40');
                             loot.classList.remove('opacity-0');
                             loot.classList.add('opacity-100');
-                            ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addItem(id, 1));
+                            ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addInventory(id, 1));
                             this.unlockBadgeSlot(1);
                             this.upgradeRebornBadge(1);
                             this.logSystem('⚡【至高敬意】神秘 D 神向你的信念致敬，賜予整套神具與命運神印！', 'reward');
@@ -6902,7 +6902,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                         stage.classList.add('bg-yellow-950/40');
                         loot.classList.remove('opacity-0');
                         loot.classList.add('opacity-100');
-                        ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addItem(id, 1));
+                        ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addInventory(id, 1));
                         this.autoEquipDGodSet(); // 萌新貼心自動穿戴四件套
                         this.logSystem('⚡【神蹟顯赫】神秘Ｄ神賜予了你一套神具，並已為你自動裝備！', 'reward');
                     } 
@@ -7074,7 +7074,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
     },
     spawnMonster: function() {
         if(this.state.hp <= 0) return;
-        if (this.state.currentMap === 'hidden_valley' && this.state.level > 13 && !this.hasHiddenValleyAccess()) {
+        if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && !this.hasHiddenValleyAccess()) {
             this.forceLeaveHiddenValley();
             return;
         }
