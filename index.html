@@ -6582,20 +6582,436 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
     clearHiddenValleyReturnPass: function() {
         this.state.hiddenValleyReturnPassKills = 0;
     },
-    forceLeaveHiddenValley: function(message = '您已超過13等，警衛將您帶到銀騎士村') {
+       // 👑【神秘 D 神・創世編年史】文字電影導演引擎（大小姐親筆劇本完全體）
+    // ==========================================
+
+    // 1. 雙層實體解析：安全掃描背包與裝備是否集齊四件套
+    checkHasFullDGodSet: function() {
+        const targetIds = ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'];
+        let foundIds = new Set();
+
+        // 掃描裝備槽（invKey 解析真實 itemId）
+        for (let slot in this.state.equipment) {
+            let invKey = this.state.equipment[slot];
+            if (invKey && this.state.inventory[invKey]) {
+                let itemId = this.state.inventory[invKey].itemId;
+                if (targetIds.includes(itemId)) foundIds.add(itemId);
+            }
+        }
+
+        // 掃描背包字典
+        for (let invKey in this.state.inventory) {
+            let item = this.state.inventory[invKey];
+            if (item && targetIds.includes(item.itemId)) foundIds.add(item.itemId);
+        }
+
+        return targetIds.every(id => foundIds.has(id));
+    },
+
+    // 2. 輔助動作：自動穿戴 D 神四件套（萌新貼心防呆）
+    autoEquipDGodSet: function() {
+        const mapSlots = {
+            'd_god_weapon': 'weapon',
+            'd_god_helm': 'helmet',
+            'd_god_armor': 'armor',
+            'd_god_gloves': 'gloves'
+        };
+
+        for (let invKey in this.state.inventory) {
+            let it = this.state.inventory[invKey];
+            if (it && mapSlots[it.itemId]) {
+                const targetSlot = mapSlots[it.itemId];
+                this.state.equipment[targetSlot] = invKey;
+            }
+        }
+        this.updateUI();
+        this.renderInventory();
+    },
+
+    // 3. 核心動作：【物歸原主・實體銷毀收回】（刻印 1.08 倍掉寶）
+    consumeDGodSacredSet: function() {
+        const targetIds = ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'];
+        
+        // 卸載裝備槽
+        for (let slot in this.state.equipment) {
+            let invKey = this.state.equipment[slot];
+            if (invKey && this.state.inventory[invKey]) {
+                let itemId = this.state.inventory[invKey].itemId;
+                if (targetIds.includes(itemId)) this.state.equipment[slot] = null;
+            }
+        }
+        
+        // 刪除背包物品
+        for (let invKey in this.state.inventory) {
+            let item = this.state.inventory[invKey];
+            if (item && targetIds.includes(item.itemId)) delete this.state.inventory[invKey];
+        }
+        
+        // 永久刻印 1.08 倍掉寶神光與破碼者稱號
+        this.state.dropRateMultiplier = (this.state.dropRateMultiplier || 1.0) * 1.08;
+        this.state.hasCodeBreakerTitle = true;
+        
+        this.logSystem('🔱【代碼改寫】你將全套神具歸還給神秘D神，他滿意一笑，並在你的靈魂刻印了【破碼者】神光，獲得永久 1.08 倍掉寶！', 'reward');
+        this.updateUI();
+        this.renderInventory();
+    },
+
+    // 4. 核心動作：解鎖徽章槽位與發放/晉升徽章
+    unlockBadgeSlot: function(slotIndex) {
+        if (!this.state.unlockedBadgeSlots) this.state.unlockedBadgeSlots = 1;
+        if (slotIndex > this.state.unlockedBadgeSlots) {
+            this.state.unlockedBadgeSlots = slotIndex;
+        }
+        this.updateUI();
+    },
+
+    upgradeRebornBadge: function(rebornCount) {
+        const badgeDefinitions = {
+            1: { name: '【一階・輪迴者徽章】', desc: '初入輪迴的證明，散發著微弱卻堅定之光。', bonus: { maxHp: 50, maxMp: 20 } },
+            2: { name: '【二階・破虛者徽章】', desc: '吸納九幽氣息，隱約有虛空之力在表面流轉。', bonus: { maxHp: 100, maxMp: 50 } },
+            3: { name: '【三階・逐光者徽章】', desc: '賜予永恆光曜，散發著驅散黑暗的黎明之光。', bonus: { maxHp: 250, maxMp: 120, dmg: 2 } },
+            4: { name: '【四階・傲天者徽章】', desc: '隱隱共鳴著奇異的法則，彷彿只要跨出一步就能登天。', bonus: { maxHp: 500, maxMp: 250, dmg: 5, ac: 1 } },
+            5: { name: '【極階・創世神印】', desc: '眾神俯首，新神誕生。你已超越代碼的束縛。', bonus: { maxHp: 1000, maxMp: 500, dmg: 10, ac: 3, expBonus: 0.05 } }
+        };
+
+        const upgradeData = badgeDefinitions[rebornCount];
+        if (!upgradeData) return;
+
+        let badgeFound = false;
+        for (let invKey in this.state.inventory) {
+            let item = this.state.inventory[invKey];
+            if (item && item.itemId === 'reborn_badge') {
+                item.name = upgradeData.name;
+                item.desc = upgradeData.desc;
+                item.dynamicBonus = upgradeData.bonus;
+                badgeFound = true;
+                break;
+            }
+        }
+
+        if (!badgeFound) {
+            if (typeof this.addItemWithCustomData === 'function') {
+                this.addItemWithCustomData('reborn_badge', {
+                    name: upgradeData.name,
+                    desc: upgradeData.desc,
+                    dynamicBonus: upgradeData.bonus
+                });
+            } else {
+                this.addItem('reborn_badge', 1);
+            }
+        }
+
+        this.logSystem(`🔮【徽章共鳴】你的徽章劇烈共鳴，成功晉升為 ${upgradeData.name}！`, 'reward');
+        this.updateUI();
+    },
+
+    // 5. 劇本動態派發大腦（回傳：{ buttonText, script }）
+    getDGodCinematicPackage: function() {
+        const rebornCount = this.state.rebornCount || 0;
+        const hasMet = this.state.hasMetDGod || false;
+        const hasOldSet = this.checkHasFullDGodSet(); 
+
+        // 🎬 路線 1：老號登峰線（大小姐 90 級滿修為一轉初遇）
+        if (rebornCount === 1 && !hasMet) {
+            return {
+                buttonText: "繼續征途",
+                script: [
+                    { text: "「再次踏出銀騎士村的剎那，風雲色變，天地間發出劇烈悲鳴！」", class: "text-gray-400 text-lg italic tracking-widest", duration: 3200 },
+                    { text: "「蒼穹撕裂，神之眼眸猛然睜開，原本威嚴的威壓，在一瞬間轉為不可置信的顫動！」", class: "text-red-400 text-lg md:text-xl font-bold tracking-wide", duration: 3600 },
+                    { text: "「什麼？……等等，不對勁……這絕不是一介新人的靈魂！」", class: "text-amber-400 font-extrabold text-xl md:text-2xl tracking-wide", duration: 3200 },
+                    { 
+                        text: "「你......你的靈魂深處，烙印著登頂強者的狂傲？！甘願豪擲重金再入輪迴，真乃求道狂徒！」", 
+                        class: "text-red-500 font-extrabold text-xl md:text-2xl tracking-wide", 
+                        duration: 4500,
+                        action: (stage) => stage.classList.add('bg-red-950/40')
+                    },
+                    { 
+                        text: "「本神贈予你此四件神具，卻非庇佑，而是向你的執著信念致敬！並以神力，為你點亮第一道命運神印......」", 
+                        class: "text-yellow-400 font-black text-2xl tracking-widest animate-pulse", 
+                        duration: 4800,
+                        action: (stage, loot) => {
+                            stage.className = stage.className.replace('bg-red-950/40', 'bg-yellow-950/40');
+                            loot.classList.remove('opacity-0');
+                            loot.classList.add('opacity-100');
+                            ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addItem(id, 1));
+                            this.unlockBadgeSlot(1);
+                            this.upgradeRebornBadge(1);
+                            this.logSystem('⚡【至高敬意】神秘 D 神向你的信念致敬，賜予整套神具與命運神印！', 'reward');
+                        }
+                    },
+                    { text: "「去吧......強者。讓這片大陸，再次見證你的君臨吧......」", class: "text-emerald-400 font-medium text-lg md:text-xl tracking-wide", duration: 3200 },
+                    { text: "「天地異變復歸正常，你撫著手中的神具，雖然對你而言已非珍品，卻仍有著一絲親切的溫暖......」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3800 }
+                ]
+            };
+        }
+        
+        // 🎬 路線 2：二周目相遇階段
+        if (this.state.dGodEncounterPhase === 1) {
+            // 路線 2-A：物歸原主・破碼者昇華
+            if (hasOldSet) {
+                return {
+                    buttonText: "繼續征途",
+                    script: [
+                        { text: "「萬丈神光從九天傾瀉而下，將整個銀騎士村籠罩在白晝之中！」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3200 },
+                        { text: "「神秘D神自虛空中緩緩落下，低首垂眉，目光落在了你懷中四件已不起眼的凡鐵之上……」", class: "text-amber-300 text-lg md:text-xl font-medium tracking-wide", duration: 3600 },
+                        { text: "「……你，竟然真的完整保留了這套神力散盡的凡鐵。」", class: "text-yellow-300 text-xl font-bold tracking-widest", duration: 3200 },
+                        { text: "「世間本多涼薄貪財之輩，唯有你……參透了吾留給你的真正試煉！」", class: "text-amber-400 font-extrabold text-xl md:text-2xl tracking-wide", duration: 3800 },
+                        { 
+                            text: "「（神之浩然天音）物歸原主！吾將收回此套凡鐵，並賜予你超越此界維度之至高權限 ——【破碼者】！」", 
+                            class: "text-yellow-400 font-black text-2xl md:text-3xl tracking-widest animate-pulse", 
+                            duration: 4800,
+                            action: (stage) => {
+                                stage.classList.add('bg-amber-950/50');
+                                this.consumeDGodSacredSet();
+                            }
+                        },
+                        { text: "「從今而後，這片大陸的掉落法則，將為你敞開一角......」", class: "text-emerald-300 text-xl tracking-wide", duration: 3200 },
+                        { 
+                            text: "「另外，以吾神力，為你點亮第一道命運神印！」", 
+                            class: "text-yellow-300 font-bold text-xl tracking-wide", 
+                            duration: 3500,
+                            action: () => {
+                                this.unlockBadgeSlot(1);
+                                this.upgradeRebornBadge(1);
+                            }
+                        },
+                        { text: "「去吧，珍重舊情的強者。你的冒險之途，必不孤單......」", class: "text-emerald-400 text-lg md:text-xl tracking-wide", duration: 3200 },
+                        { text: "「神光流轉消散，你望著微微發熱的掌心，感覺自己似乎稍稍掌控了機運......」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3800 }
+                    ]
+                };
+            }
+            
+            // 路線 2-B：凡人短視・賣店勉勵
+            return {
+                buttonText: "繼續征途",
+                script: [
+                    { text: "「寂風蕭瑟，孤雲散開，熟悉神靈的虛影佇立在天邊遠遠望著你，神色淡漠。」", class: "text-gray-400 text-lg italic tracking-widest", duration: 3200 },
+                    { text: "「恭喜你踏上了這條艱困的輪迴之路……但看來，吾之餽贈，已經被你遺忘在凡塵集市之中了。」", class: "text-gray-300 text-lg md:text-xl font-medium tracking-wide", duration: 3800 },
+                    { 
+                        text: "「也罷......一切都是大小姐安排的宿命。以吾神力，為你點亮第一道命運神印......」", 
+                        class: "text-yellow-400 font-bold text-xl tracking-wide", 
+                        duration: 3800,
+                        action: () => {
+                            this.unlockBadgeSlot(1);
+                            this.upgradeRebornBadge(1);
+                        }
+                    },
+                    { text: "「去吧。憑藉你自己的雙手，再次登上顛峰......」", class: "text-emerald-400 text-lg md:text-xl tracking-wide", duration: 3200 },
+                    { text: "「神靈虛影消失不見，你望著手中金亮的徽章，心中忽地一痛，不知是羞愧，抑或是懊悔......」", class: "text-gray-400 text-lg italic tracking-widest", duration: 4000 }
+                ]
+            };
+        }
+
+        // 🎬 路線 3：高轉昇華・封神之路 (2轉 ~ 5轉及以上)
+        if (rebornCount >= 2) {
+            const commonIntro = { text: "「風起雲湧，天地共鳴，那股熟悉的神靈氣息再次出現在你面前。」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3000 };
+            
+            if (rebornCount === 2) {
+                return {
+                    buttonText: "繼續征途",
+                    script: [
+                        commonIntro,
+                        { 
+                            text: "「又見面了，不凡的冒險者。你的實力已經觸摸到凡塵桎梏，特許你的徽章吸納九幽之力！」", 
+                            class: "text-blue-400 font-extrabold text-xl md:text-2xl tracking-wide", 
+                            duration: 4000,
+                            action: (stage) => {
+                                stage.classList.add('bg-blue-950/40');
+                                this.unlockBadgeSlot(2);
+                                this.upgradeRebornBadge(2);
+                            }
+                        },
+                        { text: "「你的徽章流動著陰陰暗光，像是呼喊著要吞噬更多靈魂......」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 }
+                    ]
+                };
+            } else if (rebornCount === 3) {
+                return {
+                    buttonText: "繼續征途",
+                    script: [
+                        commonIntro,
+                        { 
+                            text: "「如此熾烈的靈魂，宿命的天秤都開始向你傾斜……特賜予你的徽章光輝之曜！」", 
+                            class: "text-amber-400 font-extrabold text-xl md:text-2xl tracking-wide", 
+                            duration: 4000,
+                            action: (stage) => {
+                                stage.classList.add('bg-amber-950/40');
+                                this.unlockBadgeSlot(3);
+                                this.upgradeRebornBadge(3);
+                            }
+                        },
+                        { text: "「一陣耀眼之間，你的徽章瀅瀅閃動，彷彿燈塔般，指引著你前行的道路。」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 }
+                    ]
+                };
+            } else if (rebornCount === 4) {
+                return {
+                    buttonText: "繼續征途",
+                    script: [
+                        commonIntro,
+                        { 
+                            text: "「連眾神也為你的堅毅而側目......不要放棄，你距離天際，只有一步之遙。」", 
+                            class: "text-red-400 font-extrabold text-xl md:text-2xl tracking-wide", 
+                            duration: 4000,
+                            action: (stage) => {
+                                stage.classList.add('bg-red-950/40');
+                                this.unlockBadgeSlot(4);
+                                this.upgradeRebornBadge(4);
+                            }
+                        },
+                        { text: "「徽章落入掌中，世間隱隱泛起低語，讚揚著你的每一步努力。」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 }
+                    ]
+                };
+            } else {
+                // 5轉大圓滿（終極彩蛋・致敬大小姐）
+                return {
+                    buttonText: "繼續征途",
+                    script: [
+                        commonIntro,
+                        { 
+                            text: "「（神靈俯首）歷經了無盡的洗鍊......你已不再是冒險者。你即是這片大陸的新神！」", 
+                            class: "text-purple-400 font-black text-2xl md:text-3xl tracking-widest animate-pulse", 
+                            duration: 4500,
+                            action: (stage) => {
+                                stage.classList.add('bg-purple-950/50');
+                                this.unlockBadgeSlot(5);
+                                this.upgradeRebornBadge(5);
+                            }
+                        },
+                        { 
+                            text: "「戴上徽章的瞬間，你的身心煥發出無比狂喜，耳邊卻彷彿聽見一陣輕靈的笑聲：『不錯嘛！現在你有資格晉見大小姐了......』」", 
+                            class: "text-pink-300 text-lg md:text-xl font-bold tracking-wide", 
+                            duration: 4800 
+                        }
+                    ]
+                };
+            }
+        }
+
+        // 🎬 路線 0：初代萌新線（一周目未轉生）
+        return {
+            buttonText: "接受神諭，啟程！",
+            script: [
+                { text: "「剛離開隱藏之谷，踏出銀騎士村的瞬間，四周狂風驟止，時空如寒冰般凝結......」", class: "text-gray-400 text-lg italic tracking-widest", duration: 3200 },
+                { text: "「你眼前的虛空中，一道遮蔽天日的雄偉身影緩緩浮現，無數代碼流光在他身後交織成道道神環。」", class: "text-yellow-500 font-medium text-lg md:text-xl tracking-wide", duration: 3600 },
+                { text: "「冒險者啊......吾乃掌管此界代碼與秩序之神－神秘D神，恭喜你憑藉自己的實力，脫離了隱藏之谷的庇蔭。」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-widest", duration: 4000 },
+                { text: "「然而！前方冒險之路的艱難，遠比想像中的更為殘酷、黑暗......」", class: "text-red-400 italic text-lg md:text-xl tracking-wide", duration: 3200 },
+                { 
+                    text: "「（神音轟鳴）為此，特贈予你本神之恩賜，助你披荊斬棘！收下這四件神具吧......」", 
+                    class: "text-yellow-400 font-extrabold text-2xl md:text-3xl tracking-widest animate-pulse", 
+                    duration: 4200,
+                    action: (stage, loot) => {
+                        stage.classList.add('bg-yellow-950/40');
+                        loot.classList.remove('opacity-0');
+                        loot.classList.add('opacity-100');
+                        ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addItem(id, 1));
+                        this.autoEquipDGodSet(); // 萌新貼心自動穿戴四件套
+                        this.logSystem('⚡【神蹟顯赫】神秘Ｄ神賜予了你一套神具，並已為你自動裝備！', 'reward');
+                    } 
+                },
+                { text: "「勇敢地開創你的道路吧，冒險者。但千萬記住，縱使力量逐漸衰退，神之羈絆，仍將永恆共鳴......」", class: "text-emerald-400 font-medium text-lg md:text-xl tracking-wide", duration: 3800 },
+                { text: "「神秘身影逐漸消散，時空也再次緩緩恢復流動。你望著身上散發金光的神具，湧現出無比的力量與自信。」", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 },
+                { text: "「現在，屬於你的冒險之路正式開始了......」", class: "text-yellow-300 font-bold text-xl tracking-widest", duration: 3000 }
+            ]
+        };
+    },
+
+    // 6. 核心文字電影院導演引擎（Promise 異步時空鎖 ＋ 毫秒級排程）
+    playDGodCinematic: function() {
+        this.stopBattle();
+        this.state.isCinematicPlaying = true;
+        this.logSystem('【神諭降臨】四周的空氣凝結了，時空陷入無盡停滯...', 'warn');
+
+        // 取出專屬劇本包與按鈕文字
+        const pkg = this.getDGodCinematicPackage();
+        const script = pkg.script;
+        const buttonText = pkg.buttonText || "接受神諭，啟程！";
+
+        let cinemaStage = document.createElement('div');
+        cinemaStage.className = 'fixed inset-0 bg-black/95 z-[99999] flex flex-col items-center justify-center p-6 select-none transition-all duration-1000';
+        cinemaStage.innerHTML = `
+            <div id="cinema-screen" class="max-w-xl w-full text-center space-y-6">
+                <!-- 劇本文字放映區 -->
+                <div id="cinema-text" class="min-h-[120px] flex items-center justify-center font-mono leading-relaxed transition-all duration-700"></div>
+                
+                <!-- 神裝入庫展示區 (四件套) -->
+                <div id="cinema-loot" class="opacity-0 transition-opacity duration-700 grid grid-cols-2 gap-2.5 max-w-sm mx-auto text-xs text-left">
+                    <div class="bg-black/60 border border-yellow-700 p-2 rounded text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]">🗡️ 神秘D神的萬象之劍</div>
+                    <div class="bg-black/60 border border-yellow-700 p-2 rounded text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]">👑 神秘D神的千機頭盔</div>
+                    <div class="bg-black/60 border border-yellow-700 p-2 rounded text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]">🛡️ 神秘D神的百鍊盔甲</div>
+                    <div class="bg-black/60 border border-yellow-700 p-2 rounded text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]">🧤 神秘D神的無量手套</div>
+                </div>
+
+                <!-- 謝幕操作按鈕（動態套用大小姐指定之按鈕文字） -->
+                <div id="cinema-action" class="opacity-0 transition-opacity duration-1000 pt-4">
+                    <button id="btn-receive-blessing" class="btn-ui c-success border-yellow-600 shadow-[0_0_20px_rgba(234,179,8,0.4)] !px-8 !py-2.5 text-sm font-bold tracking-widest hover:scale-105 transition-transform">
+                        ${buttonText}
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(cinemaStage);
+
+        const textEl = cinemaStage.querySelector('#cinema-text');
+        const lootEl = cinemaStage.querySelector('#cinema-loot');
+        const actionEl = cinemaStage.querySelector('#cinema-action');
+        const confirmBtn = cinemaStage.querySelector('#btn-receive-blessing');
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        return new Promise(async (resolve) => {
+            // 🎬 毫秒級迭代演出
+            for (const scene of script) {
+                textEl.style.opacity = '0';
+                await sleep(400);
+                
+                textEl.className = scene.class;
+                textEl.innerText = scene.text;
+                textEl.style.opacity = '1';
+                
+                if (scene.action) scene.action(cinemaStage, lootEl, textEl);
+                await sleep(scene.duration);
+            }
+
+            // 電影尾聲：按鈕浮現
+            actionEl.classList.remove('opacity-0');
+            actionEl.classList.add('opacity-100');
+
+            // 謝幕操作：淡出並徹底銷毀回收
+            confirmBtn.onclick = () => {
+                cinemaStage.classList.add('opacity-0');
+                setTimeout(() => {
+                    cinemaStage.remove();
+                    this.state.isCinematicPlaying = false;
+                    this.state.hasMetDGod = true;
+                    // 若尚未推進過相遇階段，推進至二周目階段
+                    if (this.state.dGodEncounterPhase === 0 || this.state.dGodEncounterPhase === undefined) {
+                        this.state.dGodEncounterPhase = 1;
+                    }
+                    resolve();
+                }, 1000);
+            };
+        });
+    },
+    forceLeaveHiddenValley: async function(message = '您已達到13等，隱藏之谷的試煉已結束，警衛將您護送至銀騎士村。') {
         this.stopBattle();
         this.clearHiddenValleyReturnPass();
         this.state.currentMap = 'knight_village';
         this.state.targetMonster = null;
         let mapSel = document.getElementById('map-select');
         if (mapSel) mapSel.value = 'knight_village';
-        document.getElementById('target-name').innerText = '尋找目標中...';
-        document.getElementById('target-name').className = 'c-err font-bold text-2xl mb-4';
+        document.getElementById('target-name').innerText = '休整中...';
+        document.getElementById('target-name').className = 'c-title font-bold text-2xl mb-4';
         document.getElementById('target-hp-container').classList.add('hidden');
-        this.logSystem(message, 'danger');
+        this.logSystem(message, 'info');
+        this.updateUI();
+
+        // 🌟 核心分流：若尚未見過 D 神，立刻進入電影劇場（await 等待播放完畢）；老手則正常開戰！
+        if (!this.state.hasMetDGod) {
+            await this.playDGodCinematic();
+        }
+
+        this.logSystem('時空流速恢復正常，正式踏入銀騎士村荒野！', 'info');
         this.updateUI();
         clearTimeout(this.state.mapChangeLoop);
-        this.state.mapChangeLoop = setTimeout(() => this.startBattle(), 1000);
+        this.state.mapChangeLoop = setTimeout(() => this.startBattle(), 2000);
     },
 
     changeMap: function(mapId) {
