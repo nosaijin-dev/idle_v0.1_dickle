@@ -6990,25 +6990,38 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             };
         });
     },
-    forceLeaveHiddenValley: async function(message = '您已達到13等，隱藏之谷的試煉已結束，警衛將您護送至銀騎士村。') {
+    forceLeaveHiddenValley: async function(message = '您已達到13等，警衛將您護送至銀騎士村。') {
         this.stopBattle();
+
+        // 🛡️ 核心物理狀態鎖（大師兄提點）：
+        // 若身上持有回訪剩餘擊殺數（> 0），代表純屬回訪補圖鑑結束，
+        const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0) || 
+                              (typeof this.hasHiddenValleyAccess === 'function' && this.hasHiddenValleyAccess());
+
         this.clearHiddenValleyReturnPass();
         this.state.currentMap = 'knight_village';
         this.state.targetMonster = null;
+
         let mapSel = document.getElementById('map-select');
         if (mapSel) mapSel.value = 'knight_village';
+
         document.getElementById('target-name').innerText = '休整中...';
         document.getElementById('target-name').className = 'c-title font-bold text-2xl mb-4';
         document.getElementById('target-hp-container').classList.add('hidden');
         this.logSystem(message, 'info');
         this.updateUI();
 
-        // 🌟 核心分流：若尚未見過 D 神，立刻進入電影劇場（await 等待播放完畢）；老手則正常開戰！
-        if (!this.state.hasMetDGod) {
+        // 🌟 嚴格時空安全鎖：
+        // 必須非回訪 ＋ 等級達到 13 級以上（支援跳級防呆） ＋ 該輪尚未見過 D 神
+        const isLegitGraduation = !isReturnVisit && (this.state.level >= 13);
+
+        if (!this.state.hasMetDGod && isLegitGraduation) {
             await this.playDGodCinematic();
+            // 🎬 電影謝幕完成：正式解除轉生嬰兒狀態，空氣牆功成身退！
+            this.state.isRebornInfant = false;
         }
 
-        this.logSystem('時空流速恢復正常，正式踏入銀騎士村荒野！', 'info');
+        this.logSystem('周遭時空恢復正常，你正式踏出了銀騎士村！', 'info');
         this.updateUI();
         clearTimeout(this.state.mapChangeLoop);
         this.state.mapChangeLoop = setTimeout(() => this.startBattle(), 2000);
