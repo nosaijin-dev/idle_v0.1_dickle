@@ -8004,7 +8004,7 @@ if(Math.random()*100 <= this.getER()) {
             this.renderSkills();
             this.checkAchievements();
             this.updateUI();
-            if (this.state.currentMap === 'hidden_valley' && this.state.level > 13 && !this.hasHiddenValleyAccess()) this.forceLeaveHiddenValley();
+            if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && !this.hasHiddenValleyAccess()) this.forceLeaveHiddenValley();
         }
         return leveled;
     },
