@@ -6906,16 +6906,16 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     <div id="cinema-text" class="w-full font-mono leading-relaxed opacity-0 text-center" style="transition: opacity 1.0s ease-in-out;"></div>
                 </div>
                 
-                <div id="cinema-loot" class="opacity-0 grid grid-cols-2 gap-3.5 max-w-md mx-auto text-sm text-left w-full transform scale-100" style="transition: opacity 1.5s ease-out, transform 1.5s ease-out;">
+                <!-- 🗡️ 第四幕：神裝入庫展示區（👑 opacity 縮短至 0.6s，迅速淡出消滅尾巴；transform 維持 1.2s 保留唯美縮小） -->
+                <div id="cinema-loot" class="opacity-0 grid grid-cols-2 gap-3.5 max-w-md mx-auto text-sm text-left w-full transform scale-100" 
+                     style="transition: opacity 0.6s ease-out, transform 1.2s ease-out;">
                     <div class="bg-black/80 border-2 border-yellow-600/80 p-3 rounded-lg text-yellow-300 font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center gap-2">🗡️ 神秘D神的萬象之劍</div>
                     <div class="bg-black/80 border-2 border-yellow-600/80 p-3 rounded-lg text-yellow-300 font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center gap-2">👑 神秘D神的千機頭盔</div>
                     <div class="bg-black/80 border-2 border-yellow-600/80 p-3 rounded-lg text-yellow-300 font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center gap-2">🛡️ 神秘D神的百鍊盔甲</div>
                     <div class="bg-black/80 border-2 border-yellow-600/80 p-3 rounded-lg text-yellow-300 font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center gap-2">🧤 神秘D神的無量手套</div>
                 </div>
 
-                <!-- 🌟 共享黃金操作槽位：預留 min-h-[56px]，完全告別頂字！ -->
                 <div id="cinema-dock" class="w-full min-h-[56px] flex items-center justify-center relative">
-                    <!-- 呼吸燈：初始 opacity: 0，支援 1.0 秒真・隱隱浮現 -->
                     <div id="cinema-prompt" class="text-sm md:text-base text-yellow-400/80 font-medium tracking-widest pointer-events-none opacity-0 transition-opacity duration-1000 flex items-center justify-center">
                         ▼ 輕觸任意處繼續...
                     </div>
@@ -6952,27 +6952,27 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 const scene = script[i];
                 const isLastScene = (i === script.length - 1);
 
-                // 1. 舊文字漸隱，呼吸燈悠悠散去（0.8s 溫柔淡出）
+                // 1. 舊文字漸隱，呼吸燈悠悠散去
                 textEl.style.opacity = '0';
                 promptEl.style.opacity = '0';
                 promptEl.classList.remove('animate-pulse');
                 await sleep(800);
 
-                // 2. 星塵化消散
+                // 2. 👑【人因美學精修】：進入下一幕時，卡片透明度 0.6 秒迅速蒸發，配合向後縮小 scale(0.85)，視覺上完美移出正中央，絕不遮擋下一句台詞！
                 if (hasLootShown && !scene.isLootScene) {
                     lootEl.style.opacity = '0';
-                    lootEl.style.transform = 'scale(0.92)';
+                    lootEl.style.transform = 'scale(0.85) translateY(-10px)';
                     hasLootShown = false;
                 }
 
                 await sleep(200);
 
-                // 3. 換上新台詞，在 1.0 秒內緩慢凝實浮現
+                // 3. 換上新台詞
                 textEl.className = `w-full font-mono leading-relaxed text-center ${scene.class}`;
                 textEl.innerText = scene.text;
                 textEl.style.opacity = '1';
 
-                // 4. 特殊演出觸發（第四幕神光大炸裂）
+                // 4. 特殊演出觸發
                 if (scene.action) {
                     scene.action(cinemaStage, lootEl, textEl);
                     if (lootEl.classList.contains('opacity-100') || lootEl.style.opacity === '1') {
@@ -6991,7 +6991,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     }
                 }
 
-                // 5. 動態節奏保護期（依照 lockTime 鎖定）
+                // 5. 動態節奏保護期
                 let lockDuration = scene.lockTime || (scene.isLootScene ? 8500 : Math.max(2500, scene.text.length * 120));
                 await sleep(lockDuration);
 
@@ -7005,13 +7005,13 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     break;
                 }
 
-                // 🌟【真・神光隱現】：保護時間結束，呼吸燈在 1.0 秒內「隱隱浮現」！
+                // 🌟【真・神光隱現】
                 promptEl.style.opacity = '1';
                 setTimeout(() => {
                     promptEl.classList.add('animate-pulse');
                 }, 1000);
 
-                // 6. 等待玩家點擊推進（掛網 7 秒防呆自動前進）
+                // 6. 等待玩家點擊推進
                 await new Promise(next => {
                     let timer = null;
                     const clickHandler = (e) => {
