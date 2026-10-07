@@ -7105,10 +7105,10 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
     },
 
     changeMap: function(mapId) {
-        if (mapId === 'hidden_valley' && this.state.level >= 13) {
+       if (mapId === 'hidden_valley' && this.state.level >= 13) {
             let fee = this.getHiddenValleyReturnFee();
-            const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
-            if (this.state.currentMap !== 'hidden_valley' || !isReturnVisit) {
+            // 只有「跨地圖進入隱谷」且「身上無有效許可」時才扣款，杜絕同圖手癢重複扣款
+            if (this.state.currentMap !== 'hidden_valley' && !this.hasHiddenValleyAccess()) {
                 if (this.state.adena < fee) {
                     let mapSel = document.getElementById('map-select');
                     if (mapSel) mapSel.value = this.state.currentMap;
@@ -8087,13 +8087,12 @@ if(Math.random()*100 <= this.getER()) {
             this.checkAchievements();
             this.updateUI();
 
-            // 👑【13 級精準時空熔斷】
-            // 只要在隱藏之谷、等級達到 13 級以上、且不是付費回訪（kills <= 0）
-            // 不再理會 hasHiddenValleyAccess 的小於等於 13 限制，立刻強制出谷見神！
+           // 👑【零秒異步釋放鎖】
+            // 讓 checkLevelUp 乾淨 return，下一微秒再由事件循環優雅拉開電影大幕！
             const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
             if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && !isReturnVisit) {
-                this.stopBattle(); // 立即踩死戰鬥剎車
-                this.forceLeaveHiddenValley();
+                this.stopBattle();
+                setTimeout(() => this.forceLeaveHiddenValley(), 0);
             }
         }
         return leveled;
@@ -8125,7 +8124,7 @@ if(Math.random()*100 <= this.getER()) {
         this.markActiveTimestamp(true);
     },
     getBackgroundMonsters: function() {
-        if (this.state.currentMap === 'hidden_valley' && this.state.level > 13) return [];
+        if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13) return [];
         if (this.state.currentMap === 'antaras_lair' && this.state.antarasDeadUntil > Date.now()) return [];
         if (!this.isTowerMapUnlocked(this.state.currentMap)) return [];
         let map = MAPS[this.state.currentMap];
@@ -8388,6 +8387,16 @@ if(Math.random()*100 <= this.getER()) {
         let cappedText = elapsed > seconds ? `（最多補算 ${Math.floor(BACKGROUND_CATCHUP_MAX_SECONDS / 3600)} 小時）` : '';
         this.logSystem(`${label}補算 ${timeText}：擊敗 ${kills} 隻，獲得 ${expGain.toLocaleString()} 經驗、${adenaGain.toLocaleString()} 金幣${dropText}${levelText}${cappedText}。`, 'reward');
         this.persistActiveTimestamp();
+        // 只要不是回訪補圖鑑、睡醒等級達到 13 級以上、且本輪從未見過 D 神
+        const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
+        if (this.state.level >= 13 && !this.state.hasMetDGod && !isReturnVisit) {
+            this.stopBattle();
+            // 延遲 600 毫秒，讓玩家看清離線補算日誌後，優雅拉下黑金幕布！
+            setTimeout(() => {
+                this.forceLeaveHiddenValley('在您短暫休憩的期間，突破了隱藏之谷對新手的保護桎梏，你忽然感到時空發生變化...');
+            }, 1000);
+        }
+
         return { seconds, kills, expGain, adenaGain, dropCount };
     },
 
