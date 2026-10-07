@@ -7068,14 +7068,15 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         });
     },
     forceLeaveHiddenValley: async function(message = '您已達到13等，警衛將您護送至銀騎士村。') {
+       if (this.state.isCinematicPlaying) return;
+
         this.stopBattle();
-
-        // 🛡️ 核心物理狀態鎖（大師兄提點）：
-        // 若身上持有回訪剩餘擊殺數（> 0），代表純屬回訪補圖鑑結束，
-        const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0) || 
-                              (typeof this.hasHiddenValleyAccess === 'function' && this.hasHiddenValleyAccess());
-
+        
+        // 🛡️ 徹底拔除 hasHiddenValleyAccess 內鬼！
+        // 純物理檢查：只有真正購買了通行證、且還有剩餘擊殺數的人，才算回訪！
+        const isReturnVisit = (Number(this.state.hiddenValleyReturnPassKills) > 0);
         this.clearHiddenValleyReturnPass();
+
         this.state.currentMap = 'knight_village';
         this.state.targetMonster = null;
 
@@ -7088,13 +7089,11 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.logSystem(message, 'info');
         this.updateUI();
 
-        // 🌟 嚴格時空安全鎖：
-        // 必須非回訪 ＋ 等級達到 13 級以上（支援跳級防呆） ＋ 該輪尚未見過 D 神
-        const isLegitGraduation = !isReturnVisit && (this.state.level >= 13);
+        // 🌟 暢通無阻見神門檻：非回訪 ＋ 達到 13 級 ＋ 本輪未見過 D 神
+        const shouldMeetDGod = !isReturnVisit && (this.state.level >= 13) && !this.state.hasMetDGod;
 
-        if (!this.state.hasMetDGod && isLegitGraduation) {
+        if (shouldMeetDGod) {
             await this.playDGodCinematic();
-            // 🎬 電影謝幕完成：正式解除轉生嬰兒狀態，空氣牆功成身退！
             this.state.isRebornInfant = false;
         }
 
