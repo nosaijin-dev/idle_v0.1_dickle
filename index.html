@@ -6922,18 +6922,17 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         const script = pkg.script;
         const buttonText = pkg.buttonText || "接受神諭，啟程！";
 
-        // 1. 動態建立電影院舞台（初始 opacity: 0，支援 1.2 秒平滑漸暗）
         let cinemaStage = document.createElement('div');
         cinemaStage.className = 'fixed inset-0 bg-black/95 z-[99999] flex flex-col items-center justify-center p-6 select-none opacity-0';
         cinemaStage.style.transition = 'opacity 1.2s ease-in-out';
         cinemaStage.innerHTML = `
             <div id="cinema-screen" class="max-w-xl w-full text-center space-y-6 flex flex-col items-center">
-                <!-- 📐 視覺錨點：鎖定 min-h-[140px] 與頂部對齊，確保首行基線永遠咬死同一水平面 -->
+                <!-- 📐 視覺錨點：鎖定 min-h-[140px] 與頂部對齊，基線永遠一致 -->
                 <div id="cinema-text-wrapper" class="w-full min-h-[140px] flex items-start justify-center">
                     <div id="cinema-text" class="w-full font-mono leading-relaxed transition-opacity duration-500 opacity-0 text-center"></div>
                 </div>
                 
-                <!-- 🗡️ 第四幕：神裝入庫展示區 (支援 0.7 秒星塵淡出) -->
+                <!-- 🗡️ 第四幕：神裝入庫展示區 -->
                 <div id="cinema-loot" class="opacity-0 transition-opacity duration-700 grid grid-cols-2 gap-2.5 max-w-sm mx-auto text-xs text-left w-full">
                     <div class="bg-black/60 border border-yellow-700 p-2 rounded text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]">🗡️ 神秘D神的萬象之劍</div>
                     <div class="bg-black/60 border border-yellow-700 p-2 rounded text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]">👑 神秘D神的千機頭盔</div>
@@ -6941,14 +6940,14 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     <div class="bg-black/60 border border-yellow-700 p-2 rounded text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]">🧤 神秘D神的無量手套</div>
                 </div>
 
-                <!-- 📖 點擊提示呼吸燈 -->
-                <div id="cinema-prompt" class="opacity-0 transition-opacity duration-700 text-xs text-yellow-500/70 tracking-widest animate-pulse h-6">
+                <!-- 📖 點擊提示呼吸燈（字體放大至 text-sm，加大可視度） -->
+                <div id="cinema-prompt" class="opacity-0 transition-opacity duration-700 text-sm md:text-base text-yellow-400/80 font-medium tracking-widest animate-pulse h-8 flex items-center justify-center">
                     ▼ 輕觸任意處繼續...
                 </div>
 
                 <!-- 🎬 最終謝幕大按鈕 (僅在最後一幕浮現) -->
                 <div id="cinema-action" class="opacity-0 transition-opacity duration-1000 pt-2 hidden">
-                    <button id="btn-receive-blessing" class="btn-ui c-success border-yellow-600 shadow-[0_0_20px_rgba(234,179,8,0.4)] !px-8 !py-2.5 text-sm font-bold tracking-widest hover:scale-105 transition-transform">
+                    <button id="btn-receive-blessing" class="btn-ui c-success border-yellow-600 shadow-[0_0_20px_rgba(234,179,8,0.4)] !px-8 !py-2.5 text-sm md:text-base font-bold tracking-widest hover:scale-105 transition-transform">
                         ${buttonText}
                     </button>
                 </div>
@@ -6956,7 +6955,6 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         `;
         document.body.appendChild(cinemaStage);
 
-        // 觸發全螢幕漸暗過渡（Fade-in 深度黑幕）
         requestAnimationFrame(() => {
             cinemaStage.classList.remove('opacity-0');
             cinemaStage.classList.add('opacity-100');
@@ -6970,37 +6968,31 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         return new Promise(async (resolve) => {
-            // 等待全黑過渡前置 1 秒
             await sleep(1000);
 
             let hasLootShown = false;
 
-            // 🎬 核心視覺小說（AVG）迭代排程
             for (let i = 0; i < script.length; i++) {
                 const scene = script[i];
                 const isLastScene = (i === script.length - 1);
 
-                // 1. 舊文字優雅淡出 (Fade-out 0.4s)
+                // 1. 舊文字漸隱，呼吸燈先完全熄滅歸零
                 textEl.style.opacity = '0';
-                promptEl.classList.remove('opacity-100');
-                promptEl.classList.add('opacity-0');
+                promptEl.style.opacity = '0';
                 await sleep(400);
 
-                // 🗡️ 視覺聚焦：若上一幕展示過裝備卡片，進入下一幕時讓卡片在 0.7 秒內優雅隱退
+                // 2. 裝備卡片過渡：若上一幕展示過裝備卡片，進入下一幕時讓卡片在 0.7 秒內優雅淡出
                 if (hasLootShown && !scene.isLootScene) {
                     lootEl.classList.remove('opacity-100');
                     lootEl.classList.add('opacity-0');
                     hasLootShown = false;
                 }
 
-                // 2. 注入新文字與統一樣式
+                // 3. 換上新台詞並漸顯
                 textEl.className = `w-full font-mono leading-relaxed transition-opacity duration-500 opacity-0 text-center ${scene.class}`;
                 textEl.innerText = scene.text;
-
-                // 3. 新文字優雅浮現 (Fade-in 0.6s)
                 textEl.style.opacity = '1';
 
-                // 執行該幕特殊動作（如全螢幕閃光、發寶入庫）
                 if (scene.action) {
                     scene.action(cinemaStage, lootEl, textEl);
                     if (lootEl.classList.contains('opacity-100')) {
@@ -7009,13 +7001,15 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     }
                 }
 
-                // 4. 人因工程：強制沉浸保護期（延遲解鎖點擊）
-                // 發寶幕鎖定 10 秒；其餘幕鎖定 5 秒，嚴防連點誤觸
+                // 4. 強制沉浸保護期（發寶幕 10 秒，普通幕 5 秒）
+                // ⚠️ 在這段保護時間內，呼吸燈保持 opacity: 0，玩家點擊無效
                 const lockDuration = scene.isLootScene ? 10000 : 5000;
                 await sleep(lockDuration);
 
-                // 若是最後一幕，不顯示點擊提示，直接優雅浮現謝幕按鈕
+                // 🌟【大小姐指點之終極分歧】：
+                // 若是最後一幕：徹底封印呼吸燈！直接優雅浮現謝幕大按鈕，等待玩家點擊啟程！
                 if (isLastScene) {
+                    promptEl.style.opacity = '0';
                     actionEl.classList.remove('hidden');
                     await sleep(100);
                     actionEl.classList.remove('opacity-0');
@@ -7023,15 +7017,14 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     break;
                 }
 
-                // 解鎖點擊：提示呼吸燈緩緩浮現
-                promptEl.classList.remove('opacity-0');
-                promptEl.classList.add('opacity-100');
+                // 若非最後一幕：保護時間已過，允許點擊！
+                // 呼吸燈與點擊監聽「在同一毫秒同時解鎖浮現」！
+                promptEl.style.opacity = '1';
 
-                // 5. 等待玩家點擊推進（掛網 7 秒防呆自動前進）
+                // 5. 等待玩家點擊推進（掛網 7 秒自動前進）
                 await new Promise(next => {
                     let timer = null;
                     const clickHandler = (e) => {
-                        // 若點到的是謝幕按鈕則不攔截
                         if (e.target && e.target.id === 'btn-receive-blessing') return;
                         cinemaStage.removeEventListener('click', clickHandler);
                         clearTimeout(timer);
@@ -7039,7 +7032,6 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     };
 
                     cinemaStage.addEventListener('click', clickHandler);
-                    // 7 秒無操作自動前進
                     timer = setTimeout(() => {
                         cinemaStage.removeEventListener('click', clickHandler);
                         next();
@@ -7047,7 +7039,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 });
             }
 
-            // 6. 謝幕確認：點擊按鈕後全螢幕漸隱並徹底銷毀
+            // 6. 謝幕確認
             confirmBtn.onclick = () => {
                 confirmBtn.disabled = true;
                 cinemaStage.style.opacity = '0';
