@@ -7074,7 +7074,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         
         // 🛡️ 徹底拔除 hasHiddenValleyAccess 內鬼！
         // 純物理檢查：只有真正購買了通行證、且還有剩餘擊殺數的人，才算回訪！
-        const isReturnVisit = (Number(this.state.hiddenValleyReturnPassKills) > 0);
+        const isReturnVisit = (Number(this.state.hiddenValleyReturnPassKills) > 0) && (this.state.level >= 14);
         this.clearHiddenValleyReturnPass();
 
         this.state.currentMap = 'knight_village';
