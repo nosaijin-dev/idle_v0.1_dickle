@@ -7105,9 +7105,10 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
     },
 
     changeMap: function(mapId) {
-        if (mapId === 'hidden_valley' && this.state.level > 13) {
+        if (mapId === 'hidden_valley' && this.state.level >= 13) {
             let fee = this.getHiddenValleyReturnFee();
-            if (this.state.currentMap !== 'hidden_valley' || !this.hasHiddenValleyAccess()) {
+            const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
+            if (this.state.currentMap !== 'hidden_valley' || !isReturnVisit) {
                 if (this.state.adena < fee) {
                     let mapSel = document.getElementById('map-select');
                     if (mapSel) mapSel.value = this.state.currentMap;
@@ -7150,8 +7151,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.state.mapChangeLoop = setTimeout(() => this.startBattle(), 1000);
     },
     spawnMonster: function() {
-        if(this.state.hp <= 0) return;
-        if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && !this.hasHiddenValleyAccess()) {
+       if(this.state.hp <= 0) return;
+
+        // 👑【13 級生怪攔截】非回訪且滿 13 級，立刻中止生怪並強制出谷見神！
+        const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
+        if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && !isReturnVisit) {
+            this.stopBattle();
             this.forceLeaveHiddenValley();
             return;
         }
@@ -8081,11 +8086,18 @@ if(Math.random()*100 <= this.getER()) {
             this.renderSkills();
             this.checkAchievements();
             this.updateUI();
-            if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && !this.hasHiddenValleyAccess()) this.forceLeaveHiddenValley();
+
+            // 👑【13 級精準時空熔斷】
+            // 只要在隱藏之谷、等級達到 13 級以上、且不是付費回訪（kills <= 0）
+            // 不再理會 hasHiddenValleyAccess 的小於等於 13 限制，立刻強制出谷見神！
+            const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
+            if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && !isReturnVisit) {
+                this.stopBattle(); // 立即踩死戰鬥剎車
+                this.forceLeaveHiddenValley();
+            }
         }
         return leveled;
     },
-
     isGameLoaded: function() {
         const main = document.getElementById('main-ui');
         return !!main && !main.classList.contains('hidden');
