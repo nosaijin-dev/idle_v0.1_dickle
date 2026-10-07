@@ -670,7 +670,7 @@ const ITEMS = {
     helm_str_magic: { name: '力量魔法頭盔', type: 'helmet', safe: 4, ac: -1, dropRate: 0.2, classes: ['knight'], desc: '賦予體魄強健等法術。' },
     armor_bronze: { name: '青銅盔甲', type: 'armor', safe: 4, ac: -6, dropRate: 0.3 },
     gloves_normal: { name: '手套', type: 'gloves', safe: 4, ac: 0, dropRate: 1 },
-    gloves_str: { name: '力量手套', type: 'gloves', safe: 4, ac: 0, dropRate: 0.05, desc: '蘊含食人巨魔力量的手套，輕便但能強化力量。' },
+    gloves_str: { name: '力量手套', type: 'gloves', safe: 4, ac: 0, str: 2, dropRate: 0.05, desc: '蘊含食人巨魔力量的手套，輕便但能強化力量。' },
     armor_metal: { name: '金屬盔甲', type: 'armor', safe: 4, ac: -7, dropRate: 1 },
     armor_crystal: { name: '水晶盔甲', type: 'armor', safe: 4, ac: -8, dropRate: 3 },
     helm_antic_magic: { name: '抗魔法頭盔', type: 'helmet', safe: 4, ac: -2, mr: 4, mrPerEnchant: 1, dropRate: 0.1 },
@@ -685,8 +685,8 @@ const ITEMS = {
     armor_dk: { name: '死亡騎士盔甲', type: 'armor', safe: 4, ac: -7, dropRate: 0.5, legendary: true },
     helm_dk: { name: '死亡騎士頭盔', type: 'helmet', safe: 4, ac: -3, dropRate: 0.5, legendary: true },
     belt_ogre: { name: '歐吉皮帶', type: 'belt', safe: 0, ac: 0, dropRate: 0.05 },
-    amulet_wis: { name: '精神項鍊', type: 'amulet', safe: 0, ac: 0, dropRate: 0.1, desc: '精神+1' },
-    amulet_con: { name: '體質項鍊', type: 'amulet', safe: 0, ac: 0, dropRate: 0.1, desc: '體質+1' },
+    amulet_wis: { name: '精神項鍊', type: 'amulet', safe: 0, ac: 0, wis: 1, dropRate: 0.1, desc: '能增幅精神的項鍊。' },
+    amulet_con: { name: '體質項鍊', type: 'amulet', safe: 0, ac: 0, con:1, dropRate: 0.1, desc: '能強健體質的項鍊。' },
     ring_earth: { name: '地靈戒指', type: 'ring', safe: 0, ac: 0, mr: 6, dropRate: 0.01 },
     belt_body: { name: '身體腰帶', type: 'belt', safe: 0, ac: 0, dropRate: 0.01, desc: 'HP+50' },
     belt_soul: { name: '靈魂腰帶', type: 'belt', safe: 0, ac: 0, dropRate: 0.01, desc: 'HP+25，MP+25' },
@@ -694,11 +694,11 @@ const ITEMS = {
     belt_doro: { name: '多羅皮帶', type: 'belt', safe: 0, ac: 0, dropRate: 0.3 },
     ring_harpy: { name: '哈維戒指', type: 'ring', safe: 0, ac: 0, mr: 3, dropRate: 0.01 },
     ring: { name: '戒指', type: 'ring', safe: 0, ac: 0, dropRate: 0.8 },
-    amulet_dex: { name: '敏捷項鍊', type: 'amulet', safe: 0, ac: 0, dropRate: 0.1, desc: '敏捷+1' },
-    amulet_int: { name: '智力項鍊', type: 'amulet', safe: 0, ac: 0, dropRate: 0.1, desc: '智力+1' },
+    amulet_dex: { name: '敏捷項鍊', type: 'amulet', safe: 0, ac: 0, dex: 1, dropRate: 0.1, desc: '能提升敏捷的項鍊。' },
+    amulet_int: { name: '智力項鍊', type: 'amulet', safe: 0, ac: 0, int: 1, dropRate: 0.1, desc: '能增強智力的項鍊。' },
     ring_wind: { name: '風靈戒指', type: 'ring', safe: 0, ac: 0, mr: 6, dropRate: 0.15 },
-    amulet_str: { name: '力量項鍊', type: 'amulet', safe: 0, ac: 0, dropRate: 0.3, desc: '力量+1' },
-    amulet_hidden_valley: { name: '隱藏之谷項鍊', type: 'amulet', safe: 0, ac: 0, hp: 5, mp: 5, dropRate: 100, unique: true, desc: 'HP+5 / MP+5' },
+    amulet_str: { name: '力量項鍊', type: 'amulet', safe: 0, ac: 0, str: 1, dropRate: 0.3, desc: '能強化力量的項鍊。' },
+    amulet_hidden_valley: { name: '隱藏之谷項鍊', type: 'amulet', safe: 0, ac: 0, hp: 5, mp: 5, dropRate: 100, unique: true, desc: '通過隱藏之谷試煉的證明。' },
     scroll_weapon: { name: '對武器施法的卷軸', type: 'scroll', target: 'weapon', isBlessed: false, price: 75000 },
     scroll_weapon_blessed: { name: '受祝福的對武器施法的卷軸', type: 'scroll', target: 'weapon', isBlessed: true, sellPrice: 90000 },
     scroll_armor: { name: '對盔甲施法的卷軸', type: 'scroll', target: 'armor', isBlessed: false, price: 30000 },
@@ -4445,13 +4445,13 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if (amuKey && this.state.inventory[amuKey]) {
             let amuId = this.state.inventory[amuKey].itemId;
             let amuletBonus = { amulet_str: 'str', amulet_dex: 'dex', amulet_con: 'con', amulet_int: 'int', amulet_wis: 'wis' };
-            if (amuletBonus[amuId] === stat) val += 1;
+            if (amuletBonus[amuId] === stat) val += 0;
         }
         if (stat === 'str' && this.state.equipment.gloves) {
             let gKey = this.state.equipment.gloves;
             if (this.state.inventory[gKey]) {
                 let gName = ITEMS[this.state.inventory[gKey].itemId].name;
-                if (gName === '力量手套') val += 2;
+                if (gName === '力量手套') val += 0;
             }
         }
         return val;
