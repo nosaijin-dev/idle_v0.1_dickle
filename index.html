@@ -6709,40 +6709,38 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
 
     // 5. 劇本動態派發大腦（回傳：{ buttonText, script }）
    getDGodCinematicPackage: function() {
-        const rebornCount = this.state.rebornCount || 0;
+       const rebornCount = this.state.rebornCount || 0;
         const hasMet = this.state.hasMetDGod || false;
         const hasOldSet = this.checkHasFullDGodSet(); 
 
-        // 🎬 路線 1：老號登峰線（90 級老號一轉初遇）
+        // 🎬 路線 1：老號登峰線
         if (rebornCount === 1 && !hasMet) {
             return {
                 buttonText: "繼續征途",
                 script: [
-                    { text: "再次踏出銀騎士村的剎那，風雲色變，天地間發出劇烈悲鳴！", class: "text-gray-300 text-lg italic tracking-widest", duration: 3200 },
-                    { text: "蒼穹撕裂，神之眼眸猛然睜開，原本威嚴的威壓，在一瞬間轉為不可置信的顫動！", class: "text-gray-300 text-lg italic tracking-wide", duration: 3600 },
-                    { text: "神秘D神：「什麼？……等等，不對勁……這絕不是一介新人的靈魂！」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", duration: 3200 },
+                    { text: "再次踏出銀騎士村的剎那，風雲色變，天地間發出劇烈悲鳴！", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3000 },
+                    { text: "蒼穹撕裂，神之眼眸猛然睜開，原本威嚴的威壓，在一瞬間轉為不可置信的顫動！", class: "text-gray-300 text-lg italic tracking-wide", lockTime: 3500 },
+                    { text: "神秘D神：「什麼？……等等，不對勁……這絕不是一介新人的靈魂！」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", lockTime: 3000 },
                     { 
                         text: "神秘D神：「你......你的靈魂深處，烙印著登頂強者的狂傲？！甘願豪擲重金再入輪迴，真乃求道狂徒！」", 
                         class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", 
-                        duration: 4500,
-                        action: (stage) => stage.classList.add('bg-red-950/40')
+                        lockTime: 4000
                     },
                     { 
                         text: "神秘D神：「本神贈予你此四件神具，卻非庇佑，而是向你的執著信念致敬！並以神力，為你點亮第一道命運神印......」", 
                         class: "text-yellow-400 font-black text-2xl tracking-widest animate-pulse", 
-                        duration: 4800,
+                        lockTime: 8500,
                         action: (stage, loot) => {
-                            stage.className = stage.className.replace('bg-red-950/40', 'bg-yellow-950/40');
                             loot.classList.remove('opacity-0');
                             loot.classList.add('opacity-100');
                             ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addInventory(id, 1));
                             this.unlockBadgeSlot(1);
                             this.upgradeRebornBadge(1);
-                            this.logSystem('⚡【至高敬意】神秘 D 神向你的信念致敬，賜予整套神器與命運神印！', 'reward');
+                            this.logSystem('⚡【至高敬意】神秘 D 神向你的頑強信念致敬，賜予你一套神器與命運神印！', 'reward');
                         }
                     },
-                    { text: "神秘D神：「去吧......強者。讓這片大陸，再次見證你的君臨吧......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", duration: 3200 },
-                    { text: "天地異變復歸正常，你撫著手中的神具，雖然對你而言已非珍品，卻仍有著一絲親切的溫暖......", class: "text-gray-300 text-lg italic tracking-widest", duration: 3800 }
+                    { text: "神秘D神：「去吧......強者。讓這片大陸，再次見證你的君臨吧......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", lockTime: 3000 },
+                    { text: "天地異變復歸正常，你撫著手中的神具，雖然對你而言已非珍品，卻仍有著一絲親切的溫暖......", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3500 }
                 ]
             };
         }
@@ -6753,31 +6751,25 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 return {
                     buttonText: "繼續征途",
                     script: [
-                        { text: "萬丈神光從九天傾瀉而下，將整個銀騎士村籠罩在白晝之中！", class: "text-gray-300 text-lg italic tracking-widest", duration: 3200 },
-                        { text: "神秘D神自虛空中緩緩落下，低首垂眉，目光落在了你懷中四件已不起眼的凡鐵之上……", class: "text-gray-300 text-lg italic tracking-wide", duration: 3600 },
-                        { text: "神秘D神：「……你，竟然真的完整保留了這套神力散盡的凡鐵。」", class: "text-yellow-400 font-bold text-xl tracking-widest", duration: 3200 },
-                        { text: "神秘D神：「世間本多涼薄貪財之輩，唯有你……參透了吾留給你的真正試煉！」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", duration: 3800 },
+                        { text: "萬丈神光從九天傾瀉而下，將整個銀騎士村籠罩在白晝之中！", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3000 },
+                        { text: "神秘D神自虛空中緩緩落下，低首垂眉，目光落在了你懷中四件已不起眼的凡鐵之上……", class: "text-gray-300 text-lg italic tracking-wide", lockTime: 3500 },
+                        { text: "神秘D神：「……你，竟然真的完整保留了這套神力散盡的凡鐵。」", class: "text-yellow-400 font-bold text-xl tracking-widest", lockTime: 3000 },
+                        { text: "神秘D神：「世間本多涼薄貪財之輩，唯有你……參透了吾留給你的真正試煉！」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", lockTime: 3500 },
                         { 
                             text: "神秘D神：「（神之浩然天音）物歸原主！吾將收回此套凡鐵，並賜予你超越此界維度之至高權限 ——【破碼者】！」", 
                             class: "text-yellow-400 font-black text-2xl md:text-3xl tracking-widest animate-pulse", 
-                            duration: 4800,
-                            action: (stage) => {
-                                stage.classList.add('bg-amber-950/50');
-                                this.consumeDGodSacredSet();
-                            }
+                            lockTime: 5000,
+                            action: () => { this.consumeDGodSacredSet(); }
                         },
-                        { text: "神秘D神：「從今而後，這片大陸的掉落法則，將為起敞開一角......」", class: "text-yellow-400 font-bold text-xl tracking-wide", duration: 3200 },
+                        { text: "神秘D神：「從今而後，這片大陸的掉落法則，將為你敞開一角......」", class: "text-yellow-400 font-bold text-xl tracking-wide", lockTime: 3000 },
                         { 
                             text: "神秘D神：「另外，以吾神力，為你點亮第一道命運神印！」", 
                             class: "text-yellow-400 font-bold text-xl tracking-wide", 
-                            duration: 3500,
-                            action: () => {
-                                this.unlockBadgeSlot(1);
-                                this.upgradeRebornBadge(1);
-                            }
+                            lockTime: 3000,
+                            action: () => { this.unlockBadgeSlot(1); this.upgradeRebornBadge(1); }
                         },
-                        { text: "神秘D神：「去吧，珍重舊情的強者。你的冒險之途，必不孤單......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", duration: 3200 },
-                        { text: "神光流轉消散，你望著微微發熱的掌心，感覺自己似乎稍稍掌控了機運......", class: "text-gray-300 text-lg italic tracking-widest", duration: 3800 }
+                        { text: "神秘D神：「去吧，珍重舊情的強者。你的冒險之途，必不孤單......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", lockTime: 3000 },
+                        { text: "神光流轉消散，你望著微微發熱的掌心，感覺自己似乎稍稍掌控了機運......", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3500 }
                     ]
                 };
             }
@@ -6785,26 +6777,23 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             return {
                 buttonText: "繼續征途",
                 script: [
-                    { text: "寂風蕭瑟，孤雲散開，熟悉神靈的虛影佇立在天邊遠遠望著你，神色淡漠。", class: "text-gray-300 text-lg italic tracking-widest", duration: 3200 },
-                    { text: "神秘D神：「冒險者，恭喜你踏上了這條艱困的輪迴之路……但看來，吾之餽贈，已經被你遺忘在凡塵集市之中了。」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", duration: 3800 },
+                    { text: "寂風蕭瑟，孤雲散開，熟悉神靈的虛影佇立在天邊遠遠望著你，神色淡漠。", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3000 },
+                    { text: "神秘D神：「冒險者，恭喜你踏上了這條艱困的輪迴之路……但看來，吾之餽贈，已經被你遺忘在凡塵集市之中了。」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", lockTime: 3800 },
                     { 
                         text: "神秘D神：「也罷......一切都是大小姐安排的宿命。以吾神力，為你點亮第一道命運神印......」", 
                         class: "text-yellow-400 font-bold text-xl tracking-wide", 
-                        duration: 3800,
-                        action: () => {
-                            this.unlockBadgeSlot(1);
-                            this.upgradeRebornBadge(1);
-                        }
+                        lockTime: 3500,
+                        action: () => { this.unlockBadgeSlot(1); this.upgradeRebornBadge(1); }
                     },
-                    { text: "神秘D神：「去吧。憑藉你自己的雙手，再次登上顛峰......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", duration: 3200 },
-                    { text: "神靈虛影消失不見，你望著手中金亮的徽章，心中忽地一痛，不知是羞愧，抑或是懊悔......", class: "text-gray-300 text-lg italic tracking-widest", duration: 4000 }
+                    { text: "神秘D神：「去吧。憑藉你自己的雙手，再次登上顛峰......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", lockTime: 3000 },
+                    { text: "神靈虛影消失不見，你望著手中金亮的徽章，心中忽地一痛，不知是羞愧，抑或是懊悔......", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3500 }
                 ]
             };
         }
 
-        // 🎬 路線 3：高轉昇華・封神之路
+        // 🎬 路線 3：高轉昇華
         if (rebornCount >= 2) {
-            const commonIntro = { text: "風起雲湧，天地共鳴，那股熟悉的神靈氣息再次出現在你面前。", class: "text-gray-300 text-lg italic tracking-widest", duration: 3000 };
+            const commonIntro = { text: "風起雲湧，天地共鳴，那股熟悉的神靈氣息再次出現在你面前。", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3000 };
             
             if (rebornCount === 2) {
                 return {
@@ -6814,14 +6803,10 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                         { 
                             text: "神秘D神：「又見面了，不凡的冒險者。你的實力已經觸摸到凡塵桎梏，特許你的徽章吸納九幽之力！」", 
                             class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", 
-                            duration: 4000,
-                            action: (stage) => {
-                                stage.classList.add('bg-blue-950/40');
-                                this.unlockBadgeSlot(2);
-                                this.upgradeRebornBadge(2);
-                            }
+                            lockTime: 3800,
+                            action: () => { this.unlockBadgeSlot(2); this.upgradeRebornBadge(2); }
                         },
-                        { text: "你的徽章流動著陰陰暗光，像是呼喊著要吞噬更多靈魂......", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 }
+                        { text: "你的徽章流動著陰陰暗光，像是呼喊著要吞噬更多靈魂......", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3200 }
                     ]
                 };
             } else if (rebornCount === 3) {
@@ -6832,14 +6817,10 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                         { 
                             text: "神秘D神：「如此熾烈的靈魂，宿命的天秤都開始向你傾斜……特賜予你的徽章光輝之曜！」", 
                             class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", 
-                            duration: 4000,
-                            action: (stage) => {
-                                stage.classList.add('bg-amber-950/40');
-                                this.unlockBadgeSlot(3);
-                                this.upgradeRebornBadge(3);
-                            }
+                            lockTime: 3800,
+                            action: () => { this.unlockBadgeSlot(3); this.upgradeRebornBadge(3); }
                         },
-                        { text: "一陣耀眼之間，你的徽章瀅瀅閃動，彷彿燈塔般，指引著你前行的道路。", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 }
+                        { text: "一陣耀眼之間，你的徽章瀅瀅閃動，彷彿燈塔般，指引著你前行的道路。", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3200 }
                     ]
                 };
             } else if (rebornCount === 4) {
@@ -6850,14 +6831,10 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                         { 
                             text: "神秘D神：「連眾神也為你的堅毅而側目......不要放棄，你距離天際，只有一步之遙。」", 
                             class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", 
-                            duration: 4000,
-                            action: (stage) => {
-                                stage.classList.add('bg-red-950/40');
-                                this.unlockBadgeSlot(4);
-                                this.upgradeRebornBadge(4);
-                            }
+                            lockTime: 3800,
+                            action: () => { this.unlockBadgeSlot(4); this.upgradeRebornBadge(4); }
                         },
-                        { text: "徽章落入掌中，世間隱隱泛起低語，讚揚著你的每一步努力。", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 }
+                        { text: "徽章落入掌中，世間隱隱泛起低語，讚揚著你的每一步努力。", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 3200 }
                     ]
                 };
             } else {
@@ -6868,17 +6845,13 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                         { 
                             text: "神秘D神：「（俯首）歷經了無盡的洗鍊......你已不再是冒險者。你即是這片大陸的新神！」", 
                             class: "text-yellow-400 font-black text-2xl md:text-3xl tracking-widest animate-pulse", 
-                            duration: 4500,
-                            action: (stage) => {
-                                stage.classList.add('bg-purple-950/50');
-                                this.unlockBadgeSlot(5);
-                                this.upgradeRebornBadge(5);
-                            }
+                            lockTime: 4500,
+                            action: () => { this.unlockBadgeSlot(5); this.upgradeRebornBadge(5); }
                         },
                         { 
-                            text: "戴上徽章的瞬間，你的身心煥發出無比狂喜，耳邊卻彷彿聽見一陣輕靈的笑聲：『嘻嘻～不錯嘛！現在，你有資格晉見大小姐了......』", 
+                            text: "戴上徽章的瞬間，你的身心煥發出無比狂喜，耳邊卻彷彿聽見一陣輕靈的笑聲：『嘻嘻...不錯嘛！現在，你有資格晉見大小姐了......』", 
                             class: "text-pink-300 text-lg md:text-xl font-bold tracking-wide", 
-                            duration: 4800 
+                            lockTime: 4500 
                         }
                     ]
                 };
@@ -6889,32 +6862,31 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         return {
             buttonText: "接受神諭，啟程！",
             script: [
-                { text: "剛離開隱藏之谷，踏出銀騎士村的瞬間，四周狂風驟止，時空如寒冰般凝結......", class: "text-gray-300 text-lg italic tracking-widest", duration: 3200 },
-                { text: "你眼前的虛空中，一道遮蔽天日的雄偉身影緩緩浮現，無數代碼流光在他身後交織成道道神環。", class: "text-gray-300 text-lg italic tracking-wide", duration: 3600 },
-                { text: "神秘D神：「冒險者啊......吾乃掌管此界代碼與秩序之神－神秘D神，恭喜你憑藉自己的實力，脫離了隱藏之谷的庇蔭。」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-widest", duration: 4000 },
-                { text: "神秘D神：「然而！前方冒險之路的艱難，遠比想像中的更為殘酷、黑暗......」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", duration: 3200 },
+                { text: "剛離開隱藏之谷，踏出銀騎士村的瞬間，四周狂風驟止，時空如寒冰般凝結......", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 4500 },
+                { text: "你眼前的虛空中，一道遮蔽天日的雄偉身影緩緩浮現，無數代碼流光在他身後交織成道道神環。", class: "text-gray-300 text-lg italic tracking-wide", lockTime: 4500 },
+                { text: "神秘D神：「冒險者啊......吾乃掌管此界代碼與秩序之神－神秘D神，恭喜你憑藉自己的實力，脫離了隱藏之谷的庇蔭。」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-widest", lockTime: 3800 },
+                { text: "神秘D神：「然而！前方冒險之路的艱難，遠比想像中的更為殘酷、黑暗......」", class: "text-yellow-400 font-bold text-xl md:text-2xl tracking-wide", lockTime: 3500 },
                 { 
-                    text: "神秘D神：「為此，特贈予你本神之恩賜，助你披荊斬棘！收下這四件神具吧......」", 
+                    text: "神秘D神：「為此，特贈予你本神之恩賜，助你披荊斬棘！收下這四件神具吧......(已獲得神具並自動裝備！)」", 
                     class: "text-yellow-400 font-black text-2xl md:text-3xl tracking-widest animate-pulse", 
-                    duration: 4200,
+                    lockTime: 8500,
                     action: (stage, loot) => {
-                        stage.classList.add('bg-yellow-950/40');
                         loot.classList.remove('opacity-0');
                         loot.classList.add('opacity-100');
                         ['d_god_weapon', 'd_god_helm', 'd_god_armor', 'd_god_gloves'].forEach(id => this.addInventory(id, 1));
                         this.autoEquipDGodSet();
-                        this.logSystem('⚡【神蹟顯赫】神秘D神賜予了你一套神具，並已為你自動裝備！', 'reward');
+                        this.logSystem('⚡【神蹟顯赫】神秘 Ｄ 神賜予了你一套神具，並已為你自動裝備！', 'reward');
                     } 
                 },
-                { text: "神秘D神：「勇敢地開創你的道路吧，冒險者。但千萬要記住，縱使力量逐漸衰退，神之羈絆，仍將永恆共鳴......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", duration: 3800 },
-                { text: "神秘身影逐漸消散，時空也再次緩緩恢復流動。你望著身上散發金光的神具，湧現出無比的力量與自信。", class: "text-gray-300 text-lg italic tracking-widest", duration: 3500 },
-                { text: "現在，屬於你的冒險之路正式開始了......", class: "text-gray-300 text-xl font-bold tracking-widest", duration: 3000 }
+                { text: "神秘D神：「勇敢地開創你的道路吧，冒險者。但千萬記住，縱使力量逐漸衰退，神之羈絆，仍將永恆共鳴......」", class: "text-yellow-400 font-bold text-lg md:text-xl tracking-wide", lockTime: 5000 },
+                { text: "神秘身影逐漸消散，時空也再次緩緩恢復流動。你望著身上散發金光的神具，湧現出無比的力量與自信。", class: "text-gray-300 text-lg italic tracking-widest", lockTime: 4000 },
+                { text: "現在，屬於你的冒險之路正式開始了......", class: "text-gray-300 text-xl font-bold tracking-widest", lockTime: 2800 }
             ]
         };
     },
     // 6. 核心文字電影院導演引擎（Promise 異步時空鎖 ＋ 毫秒級排程）
      playDGodCinematic: function() {
-        this.stopBattle();
+         this.stopBattle();
         this.state.isCinematicPlaying = true;
         this.logSystem('【神諭降臨】四周的空氣凝結了，時空陷入無盡停滯...', 'warn');
 
@@ -6922,22 +6894,22 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         const script = pkg.script;
         const buttonText = pkg.buttonText || "接受神諭，啟程！";
 
-        // 1. 動態建立電影院舞台（初始 opacity: 0，純黑 deep-black 宇宙底色）
         let cinemaStage = document.createElement('div');
+        // 🔒 背景純黑宇宙鎖死，絕不透出底層遊戲面板
         cinemaStage.className = 'fixed inset-0 bg-[#050507] z-[99999] flex flex-col items-center justify-center p-6 select-none opacity-0';
         cinemaStage.style.transition = 'opacity 1.2s ease-in-out';
         cinemaStage.innerHTML = `
-            <!-- 🌟 方案 B 核心：內部獨立純黑金色星雲光暈層 (不透底層視窗) -->
+            <!-- 🌟 內部獨立純黑金光星雲層 (發寶時炸裂，不透底層) -->
             <div id="cinema-god-glow" class="absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 transform scale-50" 
                  style="background: radial-gradient(circle at center, rgba(250,204,21,0.65) 0%, rgba(217,119,6,0.25) 45%, transparent 70%);"></div>
 
             <div id="cinema-screen" class="relative z-10 max-w-xl w-full text-center space-y-6 flex flex-col items-center">
-                <!-- 📐 視覺錨點：鎖定 min-h-[140px] 與頂部對齊，基線永遠一致 -->
+                <!-- 📐 視覺錨點：鎖定 min-h-[140px]，基線永遠一致 -->
                 <div id="cinema-text-wrapper" class="w-full min-h-[140px] flex items-start justify-center">
                     <div id="cinema-text" class="w-full font-mono leading-relaxed opacity-0 text-center" style="transition: opacity 1.0s ease-in-out;"></div>
                 </div>
                 
-                <!-- 🗡️ 第四幕：神裝入庫展示區 (加大 1.2 倍尺寸，支援 1.5 秒唯美星塵消散) -->
+                <!-- 🗡️ 第四幕：神裝入庫展示區 (加大 1.2 倍，1.5s 唯美星塵消散) -->
                 <div id="cinema-loot" class="opacity-0 grid grid-cols-2 gap-3.5 max-w-md mx-auto text-sm text-left w-full transform scale-100" style="transition: opacity 1.5s ease-out, transform 1.5s ease-out;">
                     <div class="bg-black/80 border-2 border-yellow-600/80 p-3 rounded-lg text-yellow-300 font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center gap-2">🗡️ 神秘D神的萬象之劍</div>
                     <div class="bg-black/80 border-2 border-yellow-600/80 p-3 rounded-lg text-yellow-300 font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center gap-2">👑 神秘D神的千機頭盔</div>
@@ -6945,12 +6917,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     <div class="bg-black/80 border-2 border-yellow-600/80 p-3 rounded-lg text-yellow-300 font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center gap-2">🧤 神秘D神的無量手套</div>
                 </div>
 
-                <!-- 📖 點擊提示呼吸燈（加大至 text-base，保護期內物理 hidden 徹底封印） -->
-                <div id="cinema-prompt" class="hidden text-sm md:text-base text-yellow-400/80 font-medium tracking-widest animate-pulse h-8 flex items-center justify-center">
+                <!-- 📖 方案 1 佔位透明呼吸燈：固定 h-8 佔位空間，絕不把文字往上頂！ -->
+                <div id="cinema-prompt" class="h-8 flex items-center justify-center text-sm md:text-base text-yellow-400/80 font-medium tracking-widest animate-pulse opacity-0 transition-opacity duration-500 pointer-events-none">
                     ▼ 輕觸任意處繼續...
                 </div>
 
-                <!-- 🎬 最終謝幕大按鈕 (僅在最後一幕浮現) -->
+                <!-- 🎬 最終謝幕大按鈕 (僅最後一幕浮現) -->
                 <div id="cinema-action" class="opacity-0 transition-opacity duration-1000 pt-2 hidden">
                     <button id="btn-receive-blessing" class="btn-ui c-success border-yellow-600 shadow-[0_0_25px_rgba(234,179,8,0.5)] !px-10 !py-3 text-base font-bold tracking-widest hover:scale-105 transition-transform">
                         ${buttonText}
@@ -6960,7 +6932,6 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         `;
         document.body.appendChild(cinemaStage);
 
-        // 觸發全黑平滑漸暗過渡 (1.2s)
         requestAnimationFrame(() => {
             cinemaStage.classList.remove('opacity-0');
             cinemaStage.classList.add('opacity-100');
@@ -6983,9 +6954,9 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 const scene = script[i];
                 const isLastScene = (i === script.length - 1);
 
-                // 1. 舊文字與呼吸燈完全隱退 (淡出拉長至 0.8 秒)
+                // 1. 舊文字與呼吸燈優雅淡出 (位置依然保留，字體絕不晃動)
                 textEl.style.opacity = '0';
-                promptEl.classList.add('hidden'); // 物理封印，杜絕偷跑閃爍
+                promptEl.style.opacity = '0';
                 await sleep(800);
 
                 // 2. 星塵化消散：上一幕若展示過裝備卡，進入新幕時於 1.5 秒內化為金色星塵飄散隱退
@@ -7024,12 +6995,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     }
                 }
 
-                // 5. 強制沉浸保護期（發寶幕 10 秒，普通幕 5 秒）
-                const lockDuration = scene.isLootScene ? 10000 : 5000;
+                // 5. 動態節奏保護期：優先讀取自定義 lockTime；若無則依字數自適應（發寶幕至少 8 秒）
+                let lockDuration = scene.lockTime || (scene.isLootScene ? 8500 : Math.max(2500, scene.text.length * 120));
                 await sleep(lockDuration);
 
                 // 🌟【終幕分歧】：
-                // 若是最後一幕：呼吸燈徹底永久封印！只亮起謝幕大按鈕
+                // 若是最後一幕：呼吸燈徹底移除，大按鈕登場！
                 if (isLastScene) {
                     promptEl.classList.add('hidden');
                     actionEl.classList.remove('hidden');
@@ -7039,8 +7010,8 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                     break;
                 }
 
-                // 若非最後一幕：保護時間已過，呼吸燈與點擊監聽同一毫秒解鎖！
-                promptEl.classList.remove('hidden');
+                // 若非最後一幕：保護時間結束，呼吸燈在原位漸顯浮現（零位移）！
+                promptEl.style.opacity = '1';
 
                 // 6. 等待玩家點擊推進（掛網 7 秒防呆自動前進）
                 await new Promise(next => {
