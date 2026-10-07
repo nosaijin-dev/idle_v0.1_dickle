@@ -8008,7 +8008,7 @@ if(Math.random()*100 <= this.getER()) {
         this.state.targetMonster = null;
         this.checkLevelUp();
         let hiddenValleyReturnExpired = false;
-        if (this.state.currentMap === 'hidden_valley' && this.state.level > 13 && this.state.hiddenValleyReturnPassKills > 0) {
+        if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13 && this.state.hiddenValleyReturnPassKills > 0) {
             this.state.hiddenValleyReturnPassKills = Math.max(0, this.state.hiddenValleyReturnPassKills - 1);
             hiddenValleyReturnExpired = this.state.hiddenValleyReturnPassKills <= 0;
         }
@@ -8294,7 +8294,7 @@ if(Math.random()*100 <= this.getER()) {
         this.applyBackgroundRegen(seconds);
         this.advanceBackgroundBuffs(seconds);
 
-        if (this.state.currentMap === 'hidden_valley' && this.state.level > 13) {
+        if (this.state.currentMap === 'hidden_valley' && this.state.level >= 13) {
             if (this.hasHiddenValleyAccess()) {
                 this.logSystem('隱藏之谷回訪不進行背景補算，請在頁面開啟時手動補圖鑑。', 'warn');
                 this.updateUI();
