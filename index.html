@@ -5034,10 +5034,30 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         else if(def.type === 'elixir') typeName = '萬能藥';
         
         if (typeName) html += `<div class="c-sys mb-2">[${typeName}]</div>`;
+
+        // 👑【大小姐動態屬性穿透中樞】
+        // 優先讀取隨等級變化的動態數值，讓 90 級角色看見真實衰退後的神器狀態！
+        let dynamicStats = {};
+        if (typeof def.getDynamicStats === 'function') {
+            dynamicStats = def.getDynamicStats(this.state.level) || {};
+        }
+
+        let effectiveAC = dynamicStats.ac !== undefined ? dynamicStats.ac : def.ac;
+        let effectiveHit = dynamicStats.hit !== undefined ? dynamicStats.hit : def.hit;
+        let effectiveDmg = dynamicStats.dmg !== undefined ? dynamicStats.dmg : def.dmg;
+
         let detailBonus = {
-            str: def.str || 0, dex: def.dex || 0, con: def.con || 0, int: def.int || 0, wis: def.wis || 0,
-            hp: def.hp || 0, mp: def.mp || 0, hpRegen: def.hpRegen || 0, mpRegen: def.mpRegen || 0
+            str: dynamicStats.str !== undefined ? dynamicStats.str : (def.str || 0),
+            dex: dynamicStats.dex !== undefined ? dynamicStats.dex : (def.dex || 0),
+            con: dynamicStats.con !== undefined ? dynamicStats.con : (def.con || 0),
+            int: dynamicStats.int !== undefined ? dynamicStats.int : (def.int || 0),
+            wis: dynamicStats.wis !== undefined ? dynamicStats.wis : (def.wis || 0),
+            hp: dynamicStats.hp !== undefined ? dynamicStats.hp : (def.hp || 0),
+            mp: dynamicStats.mp !== undefined ? dynamicStats.mp : (def.mp || 0),
+            hpRegen: def.hpRegen || 0,
+            mpRegen: def.mpRegen || 0
         };
+
         const legacyDetailBonuses = {
             gloves_str: { str: 2 },
             amulet_str: { str: 1 }, amulet_dex: { dex: 1 }, amulet_con: { con: 1 }, amulet_int: { int: 1 }, amulet_wis: { wis: 1 },
@@ -5053,12 +5073,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             let baseAttack = def.dice ? def.dice.toLowerCase().split('d')[1] : 0;
             html += `<div>攻擊力: <span class="text-white">${baseAttack}</span></div>`;
             html += `<div>安定值: <span class="text-white">${def.safe !== undefined ? def.safe : 0}</span></div>`;
-            if (def.hit) html += `<div>額外命中: <span class="text-white">+${def.hit}</span></div>`;
-            if (def.dmg) html += `<div>額外傷害: <span class="text-white">+${def.dmg}</span></div>`;
+            if (effectiveHit) html += `<div>額外命中: <span class="text-white">+${effectiveHit}</span></div>`;
+            if (effectiveDmg) html += `<div>額外傷害: <span class="text-white">+${effectiveDmg}</span></div>`;
             if (def.mDmg) html += `<div>魔法額外傷害: <span class="text-white">+${def.mDmg}</span></div>`;
             if (def.isUndeadSlayer) html += `<div class="c-info mt-1">對不死族與狼人族造成 3~6 點額外傷害</div>`;
         } else if (['helmet','tshirt','armor','shield','cloak','boots','leggings','gloves','amulet','earring','belt','ring','quiver'].includes(def.type)) {
-            if (def.ac !== undefined && def.ac !== 0) html += `<div>防禦力 (AC): <span class="text-white">${def.ac}</span></div>`;
+            if (effectiveAC !== undefined && effectiveAC !== 0) html += `<div>防禦力 (AC): <span class="text-white">${effectiveAC}</span></div>`;
             if (def.type === 'quiver') html += `<div>目前強化 AC: <span class="text-white">${-(Number(item.enchant) || 0)}</span></div>`;
             if (def.safe !== undefined) html += `<div>安定值: <span class="text-white">${def.safe !== undefined ? def.safe : 0}</span></div>`;
             if (def.mr) html += `<div>魔防 (MR): <span class="text-white">+${def.mr}%</span></div>`;
@@ -5074,9 +5094,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             if (def.ac !== undefined) html += `<div>寵物防禦力 (AC): <span class="text-white">${def.ac}</span></div>`;
             if (def.material) html += `<div>材質: <span class="text-white">${def.material}</span></div>`;
         }
-        const statNames = { str: '力量', dex: '敏捷', con: '體質', int: '智力', wis: '精神' };
-        for (let stat in statNames) {
-            if (detailBonus[stat]) html += `<div>${statNames[stat]}: <span class="text-white">+${detailBonus[stat]}</span></div>`;
+            const statNames = { str: '力量', dex: '敏捷', con: '體質', int: '智力', wis: '精神' };
+            for (let stat in statNames) {
+            // 👑 當屬性衰退為 0 時不顯示（避免出現尷尬的 力量: +0）
+            if (detailBonus[stat] && detailBonus[stat] > 0) {
+                html += `<div>${statNames[stat]}: <span class="text-white">+${detailBonus[stat]}</span></div>`;
+            }
         }
         if (detailBonus.hp) html += `<div>最大 HP: <span class="text-white">+${detailBonus.hp}</span></div>`;
         if (detailBonus.mp) html += `<div>最大 MP: <span class="text-white">+${detailBonus.mp}</span></div>`;
