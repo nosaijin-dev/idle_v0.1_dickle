@@ -5228,7 +5228,6 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 if(isEnchantable) {
                     actions += `<button class="btn-ui" onclick="game.openEnchantModal('${key}')">強化</button> `;
                 }
-            }
             } else if(['pet_weapon','pet_armor'].includes(def.type)) {
                 actions += `<button class="btn-ui border-blue-700 text-blue-300" onclick="game.showItemDetail('${key}')">詳細</button> `;
                 actions += `<button class="btn-ui border-yellow-700 text-yellow-300" onclick="game.equipPetItem('${key}')">寵物裝備</button> `;
