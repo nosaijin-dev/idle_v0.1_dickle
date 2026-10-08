@@ -4898,7 +4898,10 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
 
         let buffHtml = '';
         let sets = this.getSetBonuses();
-        if (sets.active.length > 0) sets.active.forEach(sName => { buffHtml += `<span class="c-legendary mr-2">[${sName}]</span>`; });
+        if (sets.active.length > 0) sets.active.forEach(sName => { 
+            const colorClass = sName.includes('D 神') ? 'c-blessed font-bold drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]' : 'c-legendary';
+            buffHtml += `<span class="${colorClass} mr-2">[${sName}]</span>`; 
+        });
         if(this.state.activePet && PETS[this.state.activePet]) buffHtml += `<span class="${PETS[this.state.activePet].color} mr-2">[同行:${this.getPetDisplayName(this.state.activePet)}]</span>`;
         const activeCompanion = this.getActiveCompanion();
         if(activeCompanion) buffHtml += `<span class="${this.getCompanionRarityClass(activeCompanion.rarity)} mr-2">[隊友:${activeCompanion.name}]</span>`;
