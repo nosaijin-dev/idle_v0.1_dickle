@@ -7068,7 +7068,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.updateUI();
 
         // 🌟 暢通無阻見神門檻：非回訪 ＋ 達到 13 級 ＋ 本輪未見過 D 神
-        const shouldMeetDGod = !isReturnVisit && (this.state.level >= 13) && !this.state.hasMetDGod;
+       const shouldMeetDGod = !isReturnVisit && (this.state.level >= 13 && this.state.level <= 30) && !this.state.hasMetDGod;
 
         if (shouldMeetDGod) {
             await this.playDGodCinematic();
@@ -8366,7 +8366,7 @@ if(Math.random()*100 <= this.getER()) {
         this.persistActiveTimestamp();
         // 只要不是回訪補圖鑑、睡醒等級達到 13 級以上、且本輪從未見過 D 神
         const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
-        if (this.state.level >= 13 && !this.state.hasMetDGod && !isReturnVisit) {
+        if (this.state.level >= 13 && this.state.level <= 30 && !this.state.hasMetDGod && !isReturnVisit) {
             this.stopBattle();
             // 延遲 600 毫秒，讓玩家看清離線補算日誌後，優雅拉下黑金幕布！
             setTimeout(() => {
