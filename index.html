@@ -3435,8 +3435,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             }
         ];
     },
-        return defs;
-    },
+    
     getEquippedItemIdBySlot: function(slot) {
         const key = this.state.equipment?.[slot];
         return key && this.state.inventory?.[key] ? this.state.inventory[key].itemId : null;
