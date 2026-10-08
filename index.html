@@ -5216,8 +5216,19 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             if(['weapon','helmet','tshirt','armor','shield','cloak','boots','leggings','belt','amulet','earring','ring','gloves','quiver'].includes(def.type)) {
                 actions += `<button class="btn-ui border-blue-700 text-blue-300" onclick="game.showItemDetail('${key}')">詳細</button> `;
                 actions += `<button class="btn-ui border-yellow-700 text-yellow-300" onclick="game.equip('${key}')">裝備</button> `;
-                if (this.getActiveCompanion && this.getActiveCompanion()) actions += `<button class="btn-ui c-info border-blue-800" onclick="game.equipActiveCompanionItem('${key}')">隊友裝備</button> `;
-                if(!['belt','amulet','ring'].includes(def.type)) actions += `<button class="btn-ui" onclick="game.openEnchantModal('${key}')">強化</button> `;
+
+                // 👑【大小姐專屬特權】：D 神神器具備神聖神格，凡人隊友不可裝備！
+                const isDGodItem = item.itemId && item.itemId.startsWith('d_god_');
+                if (this.getActiveCompanion && this.getActiveCompanion() && !isDGodItem) {
+                    actions += `<button class="btn-ui c-info border-blue-800" onclick="game.equipActiveCompanionItem('${key}')">隊友裝備</button> `;
+                }
+
+                // 👑【神之造物・不可強化】：排除飾品，且若 canEnchant === false 或是 D 神裝備，絕不產生強化按鈕！
+                const isEnchantable = !['belt','amulet','ring'].includes(def.type) && def.canEnchant !== false && !isDGodItem;
+                if(isEnchantable) {
+                    actions += `<button class="btn-ui" onclick="game.openEnchantModal('${key}')">強化</button> `;
+                }
+            }
             } else if(['pet_weapon','pet_armor'].includes(def.type)) {
                 actions += `<button class="btn-ui border-blue-700 text-blue-300" onclick="game.showItemDetail('${key}')">詳細</button> `;
                 actions += `<button class="btn-ui border-yellow-700 text-yellow-300" onclick="game.equipPetItem('${key}')">寵物裝備</button> `;
@@ -5839,6 +5850,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         let item = this.state.inventory[itemKey];
         if(!item) return;
         let def = ITEMS[item.itemId];
+
+        // 🛡️ 後端守衛：D 神裝備或不可強化之物，直接阻擋開啟！
+        if (def && (def.canEnchant === false || (item.itemId && item.itemId.startsWith('d_god_')))) {
+            this.logSystem('【神之造物】此神具蘊含神界法則，無法使用凡間卷軸進行強化！', 'warn');
+            return;
+        }
         
         this.state.enchantTargetKey = itemKey;
         let displayName = this.getDisplayName(item, def);
@@ -8320,6 +8337,7 @@ if(Math.random()*100 <= this.getER()) {
         let dropCount = 0;
         const bgPetBefore = this.getActivePetData();
         let bgPetBeforeLevel = bgPetBefore ? Math.max(1, parseInt(bgPetBefore.data.level) || 1) : 0;
+        if (!monsters || monsters.length === 0) kills = 0;
         for (let i = 0; i < kills; i++) {
             let m = this.pickBackgroundMonster(monsters);
             if (!m) continue;
