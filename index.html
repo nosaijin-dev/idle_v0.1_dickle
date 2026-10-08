@@ -5767,14 +5767,18 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.renderBuyback();
     },
 
-    sellAllNonAccessoryEquipment: function() {
+   sellAllNonAccessoryEquipment: function() {
         const accessoryTypes = ['belt','amulet','earring','ring'];
         const equipTypes = ['weapon','helmet','tshirt','armor','shield','cloak','boots','leggings','belt','amulet','earring','ring','gloves','quiver'];
         this.sellBulkItems(
             '飾品以外的未強化裝備',
-            function(item, def) { return equipTypes.includes(def.type) && !accessoryTypes.includes(def.type); },
+            function(item, def) { 
+                // 👑一鍵批量販賣時，絕對跳過 D 神神兵（只能玩家手動逐件販賣）！
+                const isDGod = item.itemId && item.itemId.startsWith('d_god_');
+                return equipTypes.includes(def.type) && !accessoryTypes.includes(def.type) && !isDGod; 
+            },
             this.getEquipmentSellPrice,
-            '已裝備與強化過的裝備會保留。'
+            '已裝備、已強化、及特殊神具會保留。'
         );
     },
 
