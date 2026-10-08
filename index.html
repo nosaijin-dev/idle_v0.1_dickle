@@ -3420,24 +3420,21 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             }
         ];
 
-        // 👑【神秘 D 神的永恆共鳴】圖鑑登錄（13 級或持有時解鎖現身）
-        const hasDGodItem = Object.values(this.state.inventory || {}).some(it => it && it.itemId && it.itemId.startsWith('d_god_'));
-        if (this.state.level >= 13 || hasDGodItem) {
-            const isAwakened = this.state.level >= 35;
-            defs.push({
-                name: '【神諭】D 神的永恆共鳴',
-                bonus: isAwakened 
-                    ? '全期經驗值獲取 +10% / 近戰傷害 +5 / AC -2 (35級顯現)' 
-                    : '全期經驗值獲取 +10% / (35級顯現神域共鳴)',
+       // 👑【第 9 套・神諭】D 神的永恆共鳴（名稱完全咬合金色 Buff，啟動即亮金框！）
+            {
+                name: 'D 神的永恆共鳴',
+                bonus: (this.state.level >= 35) 
+                    ? '全期經驗值獲取 +10% / 近戰傷害 +5 / AC -2 (35級覺醒)' 
+                    : '全期經驗值獲取 +10% / (35級解鎖神域共鳴)',
                 parts: [
                     { id: 'd_god_weapon', slots: ['weapon'] },
                     { id: 'd_god_helm', slots: ['helmet'] },
                     { id: 'd_god_armor', slots: ['armor'] },
                     { id: 'd_god_gloves', slots: ['gloves'] }
                 ]
-            });
-        }
-
+            }
+        ];
+    },
         return defs;
     },
     getEquippedItemIdBySlot: function(slot) {
