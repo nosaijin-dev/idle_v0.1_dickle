@@ -8355,29 +8355,35 @@ if(Math.random()*100 <= this.getER()) {
             return { seconds, kills: 0 };
         }
 
-        let expGain = 0;
+       let expGain = 0;
         let adenaGain = 0;
         let dropCount = 0;
         const bgPetBefore = this.getActivePetData();
         let bgPetBeforeLevel = bgPetBefore ? Math.max(1, parseInt(bgPetBefore.data.level) || 1) : 0;
         if (!monsters || monsters.length === 0) kills = 0;
 
-    
         const setBonus = this.getSetBonuses();
         const setExpBonus = setBonus.expBonus || 0;
         const totalExpMultiplier = this.getAchievementExpMultiplier() * (1 + setExpBonus);
 
+        // ==========================================
+        // 🚀【大師兄阿爾發 ✕ 小 G】終極靜默保護開關活化！
+        // ==========================================
+        const wasPlaying = this.state.isPlaying;
+        this.state.isPlaying = false; // 物理閹割所有 addInventory 的即時 DOM 重繪！
+
         for (let i = 0; i < kills; i++) {
             let m = this.pickBackgroundMonster(monsters);
             if (!m) continue;
+            
             this.recordMonsterKill(this.state.currentMap, m, 1, true);
             this.markTowerBossDefeated(m);
             
-            // ⚡ 內部純粹乘法，極速推進！
             let exp = Math.floor(Math.max(0, m.exp || 0) * totalExpMultiplier);
             
             this.state.exp += exp;
             expGain += exp;
+            
             this.gainPetExp(Math.max(1, Math.floor(exp * 0.35)), true);
             this.gainCompanionExp(Math.max(1, Math.floor(exp * 0.40)), true);
 
@@ -8393,6 +8399,10 @@ if(Math.random()*100 <= this.getER()) {
             }
         }
 
+        
+        this.state.isPlaying = wasPlaying; 
+
+        
         this.checkAchievements();
         this.refreshAdventureRecordsIfOpen();
         let leveled = this.checkLevelUp();
