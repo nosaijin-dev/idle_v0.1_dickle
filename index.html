@@ -8307,7 +8307,7 @@ if(Math.random()*100 <= this.getER()) {
         if (this.rollPetEquipmentDrop(m, multi, true)) count++;
         return count;
     },
-    applyBackgroundCatchup: function(label = '背景進度') {
+   applyBackgroundCatchup: function(label = '背景進度') {
         if (!this.isGameLoaded()) return { seconds: 0, kills: 0 };
         let now = Date.now();
         let last = parseInt(this.state.lastActiveAt) || now;
@@ -8361,15 +8361,20 @@ if(Math.random()*100 <= this.getER()) {
         const bgPetBefore = this.getActivePetData();
         let bgPetBeforeLevel = bgPetBefore ? Math.max(1, parseInt(bgPetBefore.data.level) || 1) : 0;
         if (!monsters || monsters.length === 0) kills = 0;
+
+    
+        const setBonus = this.getSetBonuses();
+        const setExpBonus = setBonus.expBonus || 0;
+        const totalExpMultiplier = this.getAchievementExpMultiplier() * (1 + setExpBonus);
+
         for (let i = 0; i < kills; i++) {
             let m = this.pickBackgroundMonster(monsters);
             if (!m) continue;
             this.recordMonsterKill(this.state.currentMap, m, 1, true);
             this.markTowerBossDefeated(m);
             
-            // 👑【 小 G】注入：後台掛機同步對齊 1.10 倍套裝經驗加成
-            let setBonus = this.getSetBonuses();
-            let exp = Math.floor(Math.max(0, m.exp || 0) * this.getAchievementExpMultiplier() * (1 + (setBonus.expBonus || 0)));
+            // ⚡ 內部純粹乘法，極速推進！
+            let exp = Math.floor(Math.max(0, m.exp || 0) * totalExpMultiplier);
             
             this.state.exp += exp;
             expGain += exp;
@@ -8405,11 +8410,11 @@ if(Math.random()*100 <= this.getER()) {
         let cappedText = elapsed > seconds ? `（最多補算 ${Math.floor(BACKGROUND_CATCHUP_MAX_SECONDS / 3600)} 小時）` : '';
         this.logSystem(`${label}補算 ${timeText}：擊敗 ${kills} 隻，獲得 ${expGain.toLocaleString()} 經驗、${adenaGain.toLocaleString()} 金幣${dropText}${levelText}${cappedText}。`, 'reward');
         this.persistActiveTimestamp();
-        // 只要不是回訪補圖鑑、睡醒等級達到 13 級以上、且本輪從未見過 D 神
+
+        // 👑 只有 13 ~ 30 級新生兒睡醒才享受 D 神迎賓鎖
         const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
         if (this.state.level >= 13 && this.state.level <= 30 && !this.state.hasMetDGod && !isReturnVisit) {
             this.stopBattle();
-            // 延遲 600 毫秒，讓玩家看清離線補算日誌後，優雅拉下黑金幕布！
             setTimeout(() => {
                 this.forceLeaveHiddenValley('在您短暫休憩的期間，突破了隱藏之谷對新手的保護桎梏，你忽然感到時空發生變化...');
             }, 1000);
