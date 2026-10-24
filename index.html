@@ -8307,7 +8307,9 @@ if(Math.random()*100 <= this.getER()) {
         if (this.rollPetEquipmentDrop(m, multi, true)) count++;
         return count;
     },
-   applyBackgroundCatchup: function(label = '背景進度') {
+  applyBackgroundCatchup: function(label = '背景進度') {
+        const _tTotalStart = performance.now(); // ⏱️ 總碼錶啟動
+
         if (!this.isGameLoaded()) return { seconds: 0, kills: 0 };
         let now = Date.now();
         let last = parseInt(this.state.lastActiveAt) || now;
@@ -8355,7 +8357,7 @@ if(Math.random()*100 <= this.getER()) {
             return { seconds, kills: 0 };
         }
 
-       let expGain = 0;
+        let expGain = 0;
         let adenaGain = 0;
         let dropCount = 0;
         const bgPetBefore = this.getActivePetData();
@@ -8366,11 +8368,11 @@ if(Math.random()*100 <= this.getER()) {
         const setExpBonus = setBonus.expBonus || 0;
         const totalExpMultiplier = this.getAchievementExpMultiplier() * (1 + setExpBonus);
 
-        // ==========================================
-        // 🚀【大師兄阿爾發 ✕ 小 G】終極靜默保護開關活化！
-        // ==========================================
         const wasPlaying = this.state.isPlaying;
-        this.state.isPlaying = false; // 物理閹割所有 addInventory 的即時 DOM 重繪！
+        this.state.isPlaying = false; // 靜默保護
+
+        // ⏱️ 探針一：開始測量子迴圈打怪耗時
+        const _tLoopStart = performance.now();
 
         for (let i = 0; i < kills; i++) {
             let m = this.pickBackgroundMonster(monsters);
@@ -8399,10 +8401,12 @@ if(Math.random()*100 <= this.getER()) {
             }
         }
 
-        
+        const _tLoopEnd = performance.now(); // ⏱️ 萬隻打怪結束
+
         this.state.isPlaying = wasPlaying; 
 
-        
+        // ⏱️ 探針二：結算與升級檢查耗時
+        const _tCheckStart = performance.now();
         this.checkAchievements();
         this.refreshAdventureRecordsIfOpen();
         let leveled = this.checkLevelUp();
@@ -8410,9 +8414,15 @@ if(Math.random()*100 <= this.getER()) {
         if (bgPetAfter && bgPetBeforeLevel > 0 && bgPetAfter.data.level > bgPetBeforeLevel) {
             this.logSystem(`${bgPetAfter.def.name} 在背景狩獵中成長到了 Lv.${bgPetAfter.data.level}。`, 'reward');
         }
+        const _tCheckEnd = performance.now();
+
+        // ⏱️ 探針三：外部畫面全量重繪耗時
+        const _tRenderStart = performance.now();
         this.renderInventory();
         this.renderPets();
         this.updateUI();
+        const _tRenderEnd = performance.now();
+
         let minutes = Math.floor(seconds / 60);
         let timeText = minutes > 0 ? `${minutes} 分鐘` : `${seconds} 秒`;
         let dropText = dropCount > 0 ? `、${dropCount} 件物品` : '';
@@ -8421,7 +8431,7 @@ if(Math.random()*100 <= this.getER()) {
         this.logSystem(`${label}補算 ${timeText}：擊敗 ${kills} 隻，獲得 ${expGain.toLocaleString()} 經驗、${adenaGain.toLocaleString()} 金幣${dropText}${levelText}${cappedText}。`, 'reward');
         this.persistActiveTimestamp();
 
-        // 👑 只有 13 ~ 30 級新生兒睡醒才享受 D 神迎賓鎖
+        // 👑 13~30級新生兒迎賓鎖
         const isReturnVisit = (this.state.hiddenValleyReturnPassKills > 0);
         if (this.state.level >= 13 && this.state.level <= 30 && !this.state.hasMetDGod && !isReturnVisit) {
             this.stopBattle();
@@ -8429,6 +8439,16 @@ if(Math.random()*100 <= this.getER()) {
                 this.forceLeaveHiddenValley('在您短暫休憩的期間，突破了隱藏之谷對新手的保護桎梏，你忽然感到時空發生變化...');
             }, 1000);
         }
+
+        const _tTotalEnd = performance.now(); // ⏱️ 總結算完工
+
+        // 📊【全能體檢成績單輸出】：直接在控制台拍出真兇！
+        console.group('%c⏱️ [離線掛機效能體檢報告]', 'color: #ffd700; font-weight: bold; font-size: 14px;');
+        console.log(`%c[1. 萬次打怪迴圈 (殺 ${kills} 隻)] : %c${(_tLoopEnd - _tLoopStart).toFixed(2)} ms`, 'color: #aaa;', (_tLoopEnd - _tLoopStart) > 1000 ? 'color: #ff4d4f; font-weight: bold;' : 'color: #52c41a;');
+        console.log(`%c[2. 成就與升級檢查]             : %c${(_tCheckEnd - _tCheckStart).toFixed(2)} ms`, 'color: #aaa;', (_tCheckEnd - _tCheckStart) > 500 ? 'color: #ff4d4f; font-weight: bold;' : 'color: #52c41a;');
+        console.log(`%c[3. 背包與UI畫面重繪]           : %c${(_tRenderEnd - _tRenderStart).toFixed(2)} ms`, 'color: #aaa;', (_tRenderEnd - _tRenderStart) > 500 ? 'color: #ff4d4f; font-weight: bold;' : 'color: #52c41a;');
+        console.log(`%c[🏁 離線補算總耗時]             : %c${(_tTotalEnd - _tTotalStart).toFixed(2)} ms (約 ${((_tTotalEnd - _tTotalStart) / 1000).toFixed(2)} 秒)`, 'color: #fff; font-weight: bold;', (_tTotalEnd - _tTotalStart) > 1500 ? 'color: #ff4d4f; font-weight: bold; font-size: 13px;' : 'color: #52c41a; font-weight: bold;');
+        console.groupEnd();
 
         return { seconds, kills, expGain, adenaGain, dropCount };
     },
