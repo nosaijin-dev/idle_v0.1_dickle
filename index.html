@@ -8378,16 +8378,16 @@ if(Math.random()*100 <= this.getER()) {
             let m = this.pickBackgroundMonster(monsters);
             if (!m) continue;
             
-            this.recordMonsterKill(this.state.currentMap, m, 1, true);
-            this.markTowerBossDefeated(m);
+            //this.recordMonsterKill(this.state.currentMap, m, 1, true);
+            //this.markTowerBossDefeated(m);
             
             let exp = Math.floor(Math.max(0, m.exp || 0) * totalExpMultiplier);
             
             this.state.exp += exp;
             expGain += exp;
             
-            this.gainPetExp(Math.max(1, Math.floor(exp * 0.35)), true);
-            this.gainCompanionExp(Math.max(1, Math.floor(exp * 0.40)), true);
+            //this.gainPetExp(Math.max(1, Math.floor(exp * 0.35)), true);
+            //this.gainCompanionExp(Math.max(1, Math.floor(exp * 0.40)), true);
 
             let adena = this.rollBackgroundAdena(m);
             this.state.adena += adena;
