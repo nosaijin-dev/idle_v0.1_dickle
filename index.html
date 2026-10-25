@@ -2789,6 +2789,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         if(tabId === 'pet') this.renderPets();
         if(tabId === 'companion') this.renderCompanions();
         if(tabId === 'shop') { this.renderBuyback(); this.renderGemExchange(); this.renderKalipFragmentExchange(); this.renderTowerCrafts(); this.renderShopPrices(); this.renderShopBulkBuy(); }
+        if (tabId === 'badges') this.renderBadgesTab();
         if(tabId === 'records') this.renderAdventureRecords();
         if(tabId === 'settings') this.updateSettingsUI();
     },
