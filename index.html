@@ -8364,26 +8364,45 @@ if(Math.random()*100 <= this.getER()) {
         // ⚖️【職業平衡承傷 ✕ 50% 資本止損核心】
         // ==========================================
         const playerAC = typeof this.getAC === 'function' ? this.getAC() : 10;
-        // 🛡️ 正統負 AC 防護力轉換（例如 -83 轉為 83 點防護）
-        const defensePower = Math.max(0, -playerAC);
+        const playerDR = typeof this.getDamageReduction === 'function' ? this.getDamageReduction() : 0;
         const playerHpRegen = (this.state.baseStats?.con || 10) + (this.getSetBonuses().hp || 0) / 10;
         
         let totalMonsterDmg = 0;
-        let totalMonsterHit = 0;
+        let totalMonsterLvl = 0;
         let totalMonsterAdena = 0;
+        let totalMonsterExtraHit = 0;
+
         monsters.forEach(m => {
-            totalMonsterDmg += (m.dmg || m.level * 2 || 10);
-            totalMonsterHit += (m.hit || m.level || 5);
-            let avgA = Array.isArray(m.adena) ? (m.adena[0] + m.adena[1]) / 2 : (m.level * 10);
+            let parts = (m.dice || '1d6+5').split('+');
+            let diceMax = parts[0].includes('d') ? parseInt(parts[0].split('d')[1]) : 6;
+            let diceBase = parts[1] ? parseInt(parts[1]) : 0;
+            totalMonsterDmg += ((1 + diceMax) / 2) + diceBase;
+            
+            let mLvl = m.level || 10;
+            totalMonsterLvl += mLvl;
+            totalMonsterExtraHit += (Math.floor(mLvl / 2) + Math.floor(mLvl / 10) * 2 + (m.hitBonus || 0));
+
+            let avgA = Array.isArray(m.adena) ? (m.adena[0] + m.adena[1]) / 2 : (mLvl * 10);
             totalMonsterAdena += avgA;
         });
+
         const avgDmg = totalMonsterDmg / monsters.length;
-        const avgHit = totalMonsterHit / monsters.length;
+        const avgLvl = totalMonsterLvl / monsters.length;
+        const avgExtraHit = totalMonsterExtraHit / monsters.length;
         const avgAdenaPerKill = totalMonsterAdena / monsters.length;
 
-        // 🛡️ 負 AC 越強，命中率越低、承傷越低
-        const hitChance = Math.max(0.05, Math.min(0.95, (avgHit - defensePower * 0.5) / 100));
-        const rawDmgPerHit = Math.max(1, avgDmg - defensePower * 0.35);
+        // 🎯【原廠 D20 命中門檻】：門檻為 10 - AC，扣除怪物額外命中與等級差
+        const targetThreshold = 10 - playerAC;
+        const monsterHitBonus = avgExtraHit + (avgLvl - this.state.level);
+        const neededRoll = targetThreshold - monsterHitBonus;
+        let hitSuccessFaces = 20 - neededRoll + 1;
+        if (neededRoll <= 2) hitSuccessFaces = 19; // 保底 5% Miss
+        if (neededRoll > 20) hitSuccessFaces = 1;  // 保底 5% Hit (暴擊)
+        const hitChance = Math.max(0.05, Math.min(0.95, hitSuccessFaces / 20));
+
+        // 🛡️【原廠 DR 減傷】：扣除全身真實減傷，保底 1 點
+        let rawDmgPerHit = Math.max(1, avgDmg - playerDR);
+        if (this.state.buffs.immune_to_harm) rawDmgPerHit = Math.max(1, Math.floor(rawDmgPerHit * 0.7)); // 聖結界
         const incomingDPS = (rawDmgPerHit * hitChance) * 1.2;
 
         const maxHealingThroughput = 38 + (playerHpRegen / 2);
