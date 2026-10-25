@@ -8386,8 +8386,8 @@ if(Math.random()*100 <= this.getER()) {
             this.state.exp += exp;
             expGain += exp;
             
-            //this.gainPetExp(Math.max(1, Math.floor(exp * 0.35)), true);
-            this.gainCompanionExp(Math.max(1, Math.floor(exp * 0.40)), true);
+            this.gainPetExp(Math.max(1, Math.floor(exp * 0.35)), true);
+            //this.gainCompanionExp(Math.max(1, Math.floor(exp * 0.40)), true);
 
             let adena = this.rollBackgroundAdena(m);
             this.state.adena += adena;
