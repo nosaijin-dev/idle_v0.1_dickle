@@ -184,6 +184,7 @@
                 <button class="tab-btn" onclick="game.switchTab('pet')">寵物</button>
                 <button class="tab-btn" onclick="game.switchTab('companion')">隊友</button>
                 <button class="tab-btn" onclick="game.switchTab('shop')">商店交換和製作</button>
+                <button id="tab-btn-badges" class="tab-btn border-yellow-600/50 text-yellow-300 hover:text-yellow-100 hidden" onclick="game.switchTab('badges')">徽章</button>
                 <button class="tab-btn" onclick="game.switchTab('records')">冒險紀錄</button>
                 <button class="tab-btn" onclick="game.switchTab('settings')">設定</button>
             </div>
@@ -353,7 +354,52 @@
                         </div>
                     </div>
                 </div>
-               <div id="tab-records" class="flex-1 flex flex-col h-full overflow-y-auto custom-scroll pr-3 space-y-6 hidden" style="contain: layout paint;">
+                <!-- === 🎖️ 【徽章專屬管理與合成中心】 === -->
+<div id="tab-badges" class="flex-1 flex flex-col h-full overflow-hidden hidden">
+    <div class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-6">
+        
+        <!-- 區塊 1：主角命運徽章槽位 -->
+        <div class="bg-gray-900 p-4 rounded border border-yellow-700/40">
+            <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl flex items-center justify-between">
+                <span class="text-yellow-400 font-bold">🎖️ 角色徽章欄位</span>
+                <span class="text-xs text-gray-400">依轉生階級逐步開放</span>
+            </div>
+            <!-- 動態渲染槽位：包含裝備中資訊、未裝備空槽、🔒 未解鎖提示 -->
+            <div id="player-badge-slots" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- 區塊 2：出戰隊友徽章槽位 -->
+        <div class="bg-gray-900 p-4 rounded border border-blue-700/40">
+            <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl flex items-center justify-between">
+                <span class="text-blue-400 font-bold">🛡️ 當前出戰隊友徽章</span>
+                <span id="companion-badge-summary" class="text-xs text-gray-400"></span>
+            </div>
+            <!-- 動態渲染隊友槽位：未1轉顯示鎖定，1轉後開放裝備多餘徽章 -->
+            <div id="companion-badge-slots" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- 區塊 3：動態三合一升級專區（僅符合條件時自動浮現） -->
+        <div id="badge-upgrade-section" class="bg-gray-900 p-4 rounded border border-green-700/40 hidden">
+            <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl flex items-center justify-between">
+                <span class="text-green-400 font-bold"> 徽章升級</span>
+                <span class="text-xs text-green-300">集齊 3 枚相同且同階之徽章可升級</span>
+            </div>
+            <div id="badge-upgrade-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- 區塊 4：徽章圖鑑與背包收納庫 -->
+        <div class="bg-gray-900 p-4 rounded border border-gray-800">
+            <div class="c-title mb-3 border-b border-gray-800 pb-2 text-xl flex items-center justify-between">
+                <span class="text-gray-200 font-bold">📦 徽章圖鑑</span>
+                <span class="text-xs text-gray-500">轉生徽章置頂保護・未擁有以暗色呈現</span>
+            </div>
+            <!-- 動態圖鑑列表：卡片式排列，支援裝備、批次售出與取得途徑說明 -->
+            <div id="badge-collection-list" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+           </div>
+
+        </div>
+     </div>
+    <div id="tab-records" class="flex-1 flex flex-col h-full overflow-y-auto custom-scroll pr-3 space-y-6 hidden" style="contain: layout paint;">
     <!-- 隱形插槽：供底層舊變數安全相容，避免報錯 -->
     <div class="hidden">
         <select id="record-map-select"></select>
