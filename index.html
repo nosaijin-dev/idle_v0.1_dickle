@@ -711,6 +711,7 @@ const ITEMS = {
     potion_wisdom: { name: '慎重藥水', type: 'potion_buff', duration: 300, price: 750, sellPrice: 260 },
     potion_haste: { name: '加速藥水', type: 'potion_buff', buffId: 'potion_haste', duration: 1200, price: 300, sellPrice: 105 },
     potion_courage: { name: '勇氣藥水', type: 'potion_buff', buffId: 'second_haste', duration: 600, price: 800, sellPrice: 280, classes: ['knight'], desc: '二段加速，可與加速藥水疊加。' },
+    potion_rebirth: { name: '轉生藥水', type: 'rebirth', desc: '蘊含輪迴法則的神祕藥水，玩家或隊友必須達到90級才能購買及使用，使用後將回到等級1。', price: 99999999, sellPrice: 99999999, reqLevel: 90 },
     scroll_pet_resurrection: { name: '寵物復活卷軸', type: 'pet_scroll', price: 50000, sellPrice: 17500, reviveRate: 0.5, mpRate: 0.5, desc: '復活死亡中的寵物，恢復 50% HP / MP。' },
     scroll_pet_resurrection_blessed: { name: '受祝福的寵物復活卷軸', type: 'pet_scroll', price: 100000, sellPrice: 35000, reviveRate: 1, mpRate: 1, isBlessed: true, desc: '滿血滿魔復活死亡中的寵物。' },
     pet_evolution_fruit: { name: '寵物進化果實', type: 'pet_fruit', dropRate: 0.08, sellPrice: 12000, desc: '讓寵物進化為高級寵物。高級寵物可裝備專屬武器、防具，並提升 HP / MP 與攻擊上限。' },
