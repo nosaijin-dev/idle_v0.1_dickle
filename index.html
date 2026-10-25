@@ -8387,16 +8387,16 @@ if(Math.random()*100 <= this.getER()) {
             expGain += exp;
             
             this.gainPetExp(Math.max(1, Math.floor(exp * 0.35)), true);
-            //this.gainCompanionExp(Math.max(1, Math.floor(exp * 0.40)), true);
+            this.gainCompanionExp(Math.max(1, Math.floor(exp * 0.40)), true);
 
             let adena = this.rollBackgroundAdena(m);
             this.state.adena += adena;
             adenaGain += adena;
 
-            dropCount += this.rollBackgroundExtraDrops(m, 1);
+            //dropCount += this.rollBackgroundExtraDrops(m, 1);
             if(m.drops) {
                 m.drops.forEach(d => {
-                    if (this.awardMonsterDrop(m, d, false, true)) dropCount++;
+                   // if (this.awardMonsterDrop(m, d, false, true)) dropCount++;
                 });
             }
         }
