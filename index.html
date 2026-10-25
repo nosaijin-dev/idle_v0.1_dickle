@@ -8534,7 +8534,8 @@ if(Math.random()*100 <= this.getER()) {
             this.logSystem('您的補給消耗超出持有金幣的50%，已自動使用卷軸撤退回【銀騎士村】。', 'warn');
         }
 
-        this.logSystem(`${label}補算 ${timeText}：擊敗 ${actualKills} 隻，獲得 ${expGain.toLocaleString()} 經驗、${finalAdenaGain.toLocaleString()} 金幣${dropText}${levelText}${cappedText}。`, 'reward');
+        let costText = totalWaterCost > 0 ? ` (補給消耗: -${totalWaterCost.toLocaleString()})` : '';
+        this.logSystem(`${label}補算 ${timeText}：擊敗 ${actualKills} 隻，獲得 ${expGain.toLocaleString()} 經驗、${finalAdenaGain.toLocaleString()} 金幣${costText}${dropText}${levelText}${cappedText}。`, 'reward');
         this.persistActiveTimestamp();
 
         return { seconds, kills: actualKills, expGain, adenaGain: finalAdenaGain, dropCount };
