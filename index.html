@@ -5312,6 +5312,243 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
             invList.insertAdjacentHTML('beforeend', html);
         });
     },
+    
+    renderBadgesTab: function() {
+        const playerSlotContainer = document.getElementById('player-badge-slots');
+        const companionSlotContainer = document.getElementById('companion-badge-slots');
+        const upgradeSection = document.getElementById('badge-upgrade-section');
+        const upgradeList = document.getElementById('badge-upgrade-list');
+        const collectionList = document.getElementById('badge-collection-list');
+        if (!playerSlotContainer || !companionSlotContainer) return;
+
+        // ----------------------------------------------------
+        // 1. 角色徽章槽位渲染（1~5 槽階梯展示）
+        // ----------------------------------------------------
+        const unlockedSlots = this.state.unlockedBadgeSlots || 0;
+        let pSlotHtml = '';
+        for (let i = 1; i <= Math.min(5, unlockedSlots + 1); i++) {
+            const slotKey = `badge${i}`;
+            const isUnlocked = unlockedSlots >= i;
+            if (isUnlocked) {
+                const itemKey = this.state.equipment?.[slotKey];
+                const item = itemKey && this.state.inventory[itemKey];
+                const def = item && ITEMS[item.itemId];
+
+                if (item && def) {
+                    const canUpgrade = !def.isRebornBadge && !!def.nextTierId && this.checkEquippedBadgeCanUpgrade(slotKey);
+                    
+                    pSlotHtml += `
+                    <div class="bg-gray-950 p-3 rounded border border-yellow-700/60 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-yellow-400 font-bold text-sm">[徽章${i}] ${def.name}</span>
+                            <span class="text-xs text-green-400">裝備中</span>
+                        </div>
+                        <div class="text-xs text-gray-300 mb-3 bg-black/40 p-2 rounded">${this.getBadgeEffectDesc(def)}</div>
+                        <div class="flex gap-2 justify-end">
+                            ${canUpgrade ? `<button class="btn-ui border-green-600 text-green-300 !px-2.5 !py-0.5" onclick="game.upgradeEquippedBadge('${slotKey}')">升級</button>` : ''}
+                            <button class="btn-ui border-red-800 text-red-300 !px-2.5 !py-0.5" onclick="game.unequip('${slotKey}')">卸下</button>
+                        </div>
+                    </div>`;
+                } else {
+                    pSlotHtml += `
+                    <div class="bg-gray-950 p-3 rounded border border-dashed border-gray-800 flex items-center justify-between">
+                        <span class="text-gray-500 text-sm font-medium">[徽章${i}] （未裝備）</span>
+                        <span class="text-xs text-gray-600">可從下方圖鑑選擇裝備</span>
+                    </div>`;
+                }
+            } else {
+                pSlotHtml += `
+                <div class="bg-black/50 p-3 rounded border border-gray-900 text-gray-600 flex items-center justify-between select-none">
+                    <span class="text-sm">🔒 ${i}轉後開放此欄位</span>
+                    <span class="text-xs font-mono text-gray-700">LOCKED</span>
+                </div>`;
+            }
+        }
+        playerSlotContainer.innerHTML = pSlotHtml;
+
+        // ----------------------------------------------------
+        // 2. 當前出戰隊友徽章槽位渲染
+        // ----------------------------------------------------
+        const activeComp = this.getActiveCompanion ? this.getActiveCompanion() : null;
+        const compSummary = document.getElementById('companion-badge-summary');
+        let cSlotHtml = '';
+
+        if (!activeComp) {
+            if (compSummary) compSummary.innerText = '目前無出戰隊友';
+            cSlotHtml = `<div class="col-span-2 text-center text-gray-600 py-4 text-sm italic">請先召喚出戰隊友</div>`;
+        } else {
+            const compReborn = activeComp.rebornCount || 0;
+            if (compSummary) compSummary.innerText = `出戰中：${activeComp.name}（${compReborn}轉）`;
+
+            if (compReborn < 1) {
+                cSlotHtml = `
+                <div class="col-span-2 bg-black/50 p-3 rounded border border-gray-900 text-gray-600 flex items-center justify-between">
+                    <span class="text-sm">🔒 隊友需完成 1 轉方可解鎖徽章欄位</span>
+                    <span class="text-xs text-gray-700">未轉生</span>
+                </div>`;
+            } else {
+                const compBadgeKey = activeComp.equippedBadgeKey;
+                const item = compBadgeKey && this.state.inventory[compBadgeKey];
+                const def = item && ITEMS[item.itemId];
+                if (def) {
+                    cSlotHtml = `
+                    <div class="bg-gray-950 p-3 rounded border border-blue-700/60 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-blue-300 font-bold text-sm">[隊友徽章] ${def.name}</span>
+                            <span class="text-xs text-blue-400">配戴中</span>
+                        </div>
+                        <div class="text-xs text-gray-300 mb-3 bg-black/40 p-2 rounded">${this.getBadgeEffectDesc(def)}</div>
+                        <div class="flex justify-end">
+                            <button class="btn-ui border-red-800 text-red-300 !px-2.5 !py-0.5" onclick="game.unequipCompanionBadge()">卸下</button>
+                        </div>
+                    </div>`;
+                } else {
+                    cSlotHtml = `
+                    <div class="bg-gray-950 p-3 rounded border border-dashed border-gray-800 flex items-center justify-between">
+                        <span class="text-gray-500 text-sm font-medium">[隊友徽章] （未裝備）</span>
+                        <span class="text-xs text-gray-600">可從下方圖鑑點擊【隊友裝備】</span>
+                    </div>`;
+                }
+            }
+        }
+        companionSlotContainer.innerHTML = cSlotHtml;
+
+        // ----------------------------------------------------
+        // 3. 動態三合一升級專區（僅符合條件時動態浮現）
+        // ----------------------------------------------------
+        const upgradeableBadges = this.getUpgradeableBadgeList();
+        if (upgradeableBadges.length > 0) {
+            upgradeSection.classList.remove('hidden');
+            let upHtml = '';
+            upgradeableBadges.forEach(info => {
+                const curDef = ITEMS[info.id];
+                const nextDef = ITEMS[curDef.nextTierId];
+                upHtml += `
+                <div class="bg-gray-950 p-3 rounded border border-green-800/60 flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-bold text-green-300">${curDef.name} ➔ ${nextDef.name}</div>
+                        <div class="text-xs text-gray-400">使用3 枚同名且同階之徽章晉升（背包現有：${info.idleCount} 枚）</div>
+                    </div>
+                    <button class="btn-ui border-green-600 bg-green-950/40 text-green-300 !px-3 !py-1" onclick="game.craftBadgeUpgrade('${info.id}')">升級</button>
+                </div>`;
+            });
+            upgradeList.innerHTML = upHtml;
+        } else {
+            upgradeSection.classList.add('hidden');
+        }
+
+        // ----------------------------------------------------
+        // 4. 徽章圖鑑與收藏庫（👑 泰山置頂＋V8 穩定三階排序）
+        // ----------------------------------------------------
+        let colHtml = '';
+        let allBadges = this.getAllBadgeCatalog();
+
+        allBadges.sort((aId, bId) => {
+            const defA = ITEMS[aId], defB = ITEMS[bId];
+            const isRebornA = !!defA?.isRebornBadge;
+            const isRebornB = !!defB?.isRebornBadge;
+
+            // 1. 第一階：轉生徽章絕對置頂
+            if (isRebornA !== isRebornB) {
+                return isRebornA ? -1 : 1;
+            }
+
+            // 2. 第二階：數量由多到少排序
+            const countA = this.getBadgeTotalCount(aId);
+            const countB = this.getBadgeTotalCount(bId);
+            const diff = countB - countA;
+            if (diff !== 0) return diff;
+
+            // 3. 第三階：數量相同或皆為 x0 時，依 ID 字母順序穩定視覺，防畫面跳動
+            return aId.localeCompare(bId);
+        });
+
+        allBadges.forEach(bId => {
+            const def = ITEMS[bId];
+            if (!def) return;
+            const count = this.getBadgeTotalCount(bId);
+            const isOwned = count > 0;
+            const isReborn = !!def.isRebornBadge;
+
+            const cardOpacity = isOwned ? 'border-gray-800 bg-gray-950' : 'border-gray-900 bg-black/40 opacity-40 select-none';
+            const countDisplay = isOwned ? `<span class="text-yellow-400 font-bold">x${count}</span>` : `<span class="text-gray-600">x0</span>`;
+
+            colHtml += `
+            <div class="p-3 rounded border ${cardOpacity} flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-sm ${isOwned ? (isReborn ? 'text-yellow-400' : 'text-gray-200') : 'text-gray-500'}">${def.name}</span>
+                        ${countDisplay}
+                    </div>
+                    <div class="text-xs text-gray-300 mb-2 bg-black/30 p-2 rounded min-h-[44px]">${this.getBadgeEffectDesc(def)}</div>
+                    <div class="text-[11px] text-gray-500 mb-3">取得途徑：${def.source || '野外怪物 / 輪迴賜福'}</div>
+                </div>
+
+                ${isOwned ? `
+                <div class="flex gap-1.5 flex-wrap justify-end pt-2 border-t border-gray-800/80">
+                    <button class="btn-ui !px-2 !py-0.5 text-xs border-yellow-700 text-yellow-300" onclick="game.equipBadgeFromTab('${bId}')">裝備</button>
+                    ${!isReborn ? `<button class="btn-ui !px-2 !py-0.5 text-xs border-blue-700 text-blue-300" onclick="game.equipBadgeToCompanionFromTab('${bId}')">隊友裝備</button>` : ''}
+                    ${!isReborn ? `<button class="btn-ui !px-2 !py-0.5 text-xs border-red-800 text-red-300" onclick="game.sellBadgePrompt('${bId}')">售出</button>` : ''}
+                </div>` : ''}
+            </div>`;
+        });
+        collectionList.innerHTML = colHtml;
+    },
+
+    // === 🛡️ 原地升級兩段式原子扣除法（完美對齊 itemKey 刪除） ===
+    upgradeEquippedBadge: function(slotKey) {
+        const equipKey = this.state.equipment?.[slotKey];
+        const equipItem = equipKey && this.state.inventory[equipKey];
+        if (!equipItem) return;
+
+        const currentBadgeId = equipItem.itemId;
+        const curDef = ITEMS[currentBadgeId];
+        const nextId = curDef?.nextTierId;
+        if (!nextId || !ITEMS[nextId]) return;
+
+        // 1. 先清點非身上裝備的閒置材料 Key
+        const idleMaterialKeys = [];
+        for (let k in this.state.inventory) {
+            if (k !== equipKey && this.state.inventory[k].itemId === currentBadgeId) {
+                idleMaterialKeys.push(k);
+            }
+        }
+
+        // 2. 材料不足 2 個立即安全退出
+        if (idleMaterialKeys.length < 2) {
+            alert(`還需要額外 2 枚相同的【${curDef.name}】方可升級。`);
+            return;
+        }
+
+        // 3. 精準扣除前 2 個閒置材料 Key
+        this.removeInventory(idleMaterialKeys[0], 1);
+        this.removeInventory(idleMaterialKeys[1], 1);
+
+        // 4. 原地昇華
+        this.state.inventory[equipKey].itemId = nextId;
+
+        this.logSystem(`⚡【徽章晉升】身上的 ${curDef.name} 瞬間發出銀色的光芒，升階為【${ITEMS[nextId].name}】！`, 'reward');
+
+        // 5. 全量戰力即時貫穿刷新
+        this.calculateMaxHpMp();
+        if (typeof this.updateSettingsUI === 'function') this.updateSettingsUI();
+        this.updateUI();
+        this.renderBadgesTab();
+    },
+
+    // 輔助檢查函式
+    checkEquippedBadgeCanUpgrade: function(slotKey) {
+        const equipKey = this.state.equipment?.[slotKey];
+        const item = equipKey && this.state.inventory[equipKey];
+        if (!item) return false;
+        let count = 0;
+        for (let k in this.state.inventory) {
+            if (k !== equipKey && this.state.inventory[k].itemId === item.itemId) {
+                count++;
+            }
+        }
+        return count >= 2;
+    },
 
     equip: function(itemKey) {
         let item = this.state.inventory[itemKey];
