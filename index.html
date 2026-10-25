@@ -2773,6 +2773,11 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
     },
 
     switchTab: function(tabId, evt = null) {
+        // 🛑【徽章分頁安全門防呆】未達 13 級見神解鎖前，絕對禁止進入
+        if (tabId === 'badges' && (this.state.unlockedBadgeSlots || 0) < 1) {
+            this.logSystem('輪迴法則尚未開啟，無法開啟徽章系統！', 'danger');
+            return;
+        }
         document.getElementById('tab-inv').classList.add('hidden');
         document.getElementById('tab-magic').classList.add('hidden');
         document.getElementById('tab-pet').classList.add('hidden');
@@ -4941,6 +4946,15 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         document.getElementById('ui-dmg').innerText = this.getMeleeDmg() >= 0 ? `+${this.getMeleeDmg()}` : this.getMeleeDmg();
         document.getElementById('ui-hit').innerText = this.getMeleeHit() >= 0 ? `+${this.getMeleeHit()}` : this.getMeleeHit();
         this.updateBonusStatUI();
+
+        const badgeTabBtn = document.getElementById('tab-btn-badges');
+        if (badgeTabBtn) {
+            if ((this.state.unlockedBadgeSlots || 0) >= 1) {
+                badgeTabBtn.classList.remove('hidden');
+            } else {
+                badgeTabBtn.classList.add('hidden');
+            }
+        }
 
         let buffHtml = '';
         let sets = this.getSetBonuses();
