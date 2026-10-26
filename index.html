@@ -7010,44 +7010,86 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
 
     upgradeRebornBadge: function(rebornCount) {
         const badgeDefinitions = {
-            1: { name: '【一階・輪迴者徽章】', desc: '初入輪迴的證明，散發著微弱卻堅定之光。', bonus: { maxHp: 50, maxMp: 20 } },
-            2: { name: '【二階・破虛者徽章】', desc: '吸納九幽氣息，隱約有虛空之力在表面流轉。', bonus: { maxHp: 100, maxMp: 50 } },
-            3: { name: '【三階・逐光者徽章】', desc: '賜予永恆光曜，散發著驅散黑暗的黎明之光。', bonus: { maxHp: 250, maxMp: 120, dmg: 2 } },
-            4: { name: '【四階・傲天者徽章】', desc: '隱隱共鳴著奇異的法則，彷彿只要跨出一步就能登天。', bonus: { maxHp: 500, maxMp: 250, dmg: 5, ac: 1 } },
-            5: { name: '【極階・創世神印】', desc: '眾神俯首，新神誕生。你已超越代碼的束縛。', bonus: { maxHp: 1000, maxMp: 500, dmg: 10, ac: 3, expBonus: 0.05 } }
+            1: { name: '【一階・輪迴者徽章】', desc: '初入輪迴的證明，刻印著輪迴的初步法則。', bonus: { maxHp: 50, maxMp: 20 } },
+            2: { name: '【二階・破虛者徽章】', desc: '二轉證明的神聖徽章，輪迴之光愈發璀璨。', bonus: { maxHp: 100, maxMp: 50 } },
+            3: { name: '【三階・逐光者徽章】', desc: '三轉證明的神聖徽章，超越凡軀的意志象徵。', bonus: { maxHp: 250, maxMp: 120, dmg: 2 } },
+            4: { name: '【四階・傲天者徽章】', desc: '四轉證明的神聖徽章，透露出些許神秘法則。', bonus: { maxHp: 500, maxMp: 250, dmg: 5, ac: 1 } },
+            5: { name: '【極階・創世神印】', desc: '五轉圓滿的崇聖徽記，象徵踏入至高境界。', bonus: { maxHp: 1000, maxMp: 500, dmg: 10, ac: 3, expBonus: 0.05 } }
         };
 
-        const upgradeData = badgeDefinitions[rebornCount];
+        const targetTurn = Math.max(1, Math.min(5, parseInt(rebornCount) || 1));
+        const upgradeData = badgeDefinitions[targetTurn];
         if (!upgradeData) return;
 
-        let badgeFound = false;
+        // 1. 尋找轉生徽章實體（無論在身上或背包）
+        let badgeKey = null;
         for (let invKey in this.state.inventory) {
             let item = this.state.inventory[invKey];
             if (item && item.itemId === 'reborn_badge') {
+                badgeKey = invKey;
+                // 🛡️ 原地記憶體昇華：直接改寫屬性，零刪除、零重新指派、防吞裝
                 item.name = upgradeData.name;
                 item.desc = upgradeData.desc;
                 item.dynamicBonus = upgradeData.bonus;
-                badgeFound = true;
+                item.isRebornBadge = true; // 👑 補上神聖防手滑標籤！防止商店一鍵批次誤賣！
                 break;
             }
         }
 
-        if (!badgeFound) {
-            if (typeof this.addItemWithCustomData === 'function') {
-                this.addItemWithCustomData('reborn_badge', {
-                    name: upgradeData.name,
-                    desc: upgradeData.desc,
-                    dynamicBonus: upgradeData.bonus
-                });
-            } else {
-                this.addInventory('reborn_badge', 1);
+        // 2. 若庫存與身上完全沒有（通常為初次 1 轉），正式實體生成
+        if (!badgeKey) {
+            // 呼叫原廠函數生成底層實體
+            this.addInventory('reborn_badge', 1, 0, false);
+            
+            // 👑 嚴密回溯尋址：鎖定新入庫的 Key
+            for (let invKey in this.state.inventory) {
+                if (this.state.inventory[invKey]?.itemId === 'reborn_badge') {
+                    badgeKey = invKey;
+                    this.state.inventory[badgeKey].name = upgradeData.name;
+                    this.state.inventory[badgeKey].desc = upgradeData.desc;
+                    this.state.inventory[badgeKey].dynamicBonus = upgradeData.bonus;
+                    this.state.inventory[badgeKey].isRebornBadge = true; // 👑 物理鎖死轉生防禦屬性！
+                    break; // 👑 抓到最新入庫的 Key 後必須立即中斷，絕對不能繼續空轉！
+                }
             }
         }
 
-        this.logSystem(`🔮【徽章共鳴】你的徽章劇烈共鳴，成功晉升為 ${upgradeData.name}！`, 'reward');
-        this.updateUI();
-    },
+        // 3. 檢查轉生徽章當前是否已配戴在身上某個徽章槽
+        if (!this.state.equipment) this.state.equipment = {};
+        let equippedSlot = null;
+        for (let i = 1; i <= 5; i++) {
+            if (this.state.equipment[`badge${i}`] === badgeKey) {
+                equippedSlot = `badge${i}`;
+                break;
+            }
+        }
 
+        // 4. 智慧穿戴邏輯
+        if (targetTurn === 1) {
+            // === 【1 轉初生】：槽位必定全空，自動為玩家裝備至 badge1 ===
+            if (!equippedSlot) {
+                this.state.equipment.badge1 = badgeKey;
+                this.logSystem(`你已獲得轉生專屬【${upgradeData.name}】，並自動配戴至徽章欄位！`, 'reward');
+            } else {
+                this.logSystem(`你身上的【${upgradeData.name}】綻放出耀眼神光！`, 'reward');
+            }
+        } else {
+            // === 【2 轉以上高轉生】：尊重玩家自主權，不強制換裝 ===
+            if (equippedSlot) {
+                this.logSystem(`你身上的轉生專屬徽章已晉升為【${upgradeData.name}】！`, 'reward');
+            } else {
+                this.logSystem(`你的轉生專屬徽章已晉升為【${upgradeData.name}】！可至徽章分頁選擇配戴。`, 'reward');
+            }
+        }
+
+        // 5. 全量戰力即時貫穿刷新鏈
+        if (typeof this.getEffStat === 'function') this.getEffStat(); // 👑 總源頭數值無縫全量貫穿！
+        this.calculateMaxHpMp();
+        if (typeof this.updateSettingsUI === 'function') this.updateSettingsUI();
+        this.updateUI();
+        if (typeof this.renderBadgesTab === 'function') this.renderBadgesTab();
+        if (typeof this.renderInventory === 'function') this.renderInventory();
+    },
     // 5. 劇本動態派發大腦（回傳：{ buttonText, script }）
    getDGodCinematicPackage: function() {
        const rebornCount = this.state.rebornCount || 0;
