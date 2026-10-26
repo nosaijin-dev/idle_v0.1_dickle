@@ -289,6 +289,7 @@
                             <div class="list-item"><span class="c-potion-purple">加速藥水</span> <div class="flex items-center gap-3"><span class="c-warn">300 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_haste')">購買</button></div></div>
                             <div class="list-item"><span class="c-potion-purple">勇氣藥水</span> <div class="flex items-center gap-3"><span class="c-warn">800 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('potion_courage')">購買</button></div></div>
                             <div class="list-item"><span class="c-potion-purple">精靈餅乾</span> <div class="flex items-center gap-3"><span class="c-warn">1200 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('elven_wafer')">購買</button></div></div>
+                            <div class="list-item mt-2 border-t border-gray-800 pt-4"><span class="text-green-400 font-bold" style="color: #4ade80; text-shadow: 0 0 6px rgba(74, 222, 128, 0.4);">轉生藥水</span> <div class="flex items-center gap-3"> <span class="c-warn">99,999,999 金幣</span>  <button class="btn-ui !px-3 !py-1 text-green-300 border-green-600 hover:bg-green-950/40" onclick="game.buyItem('potion_rebirth')">購買</button></div></div>
                             <div class="list-item mt-2 border-t border-gray-800 pt-4"><span class="c-info">寵物復活卷軸 <span class="c-sys text-sm">復活後 HP/MP 50%</span></span> <div class="flex items-center gap-3"><span class="c-warn">50,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_pet_resurrection')">購買</button></div></div>
                             <div class="list-item"><span class="c-blessed">受祝福的寵物復活卷軸 <span class="c-sys text-sm">復活後 HP/MP 100%</span></span> <div class="flex items-center gap-3"><span class="c-warn">100,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_pet_resurrection_blessed')">購買</button></div></div>
                             <div class="list-item mt-2 border-t border-gray-800 pt-4"><span class="c-item">對武器施法的卷軸</span> <div class="flex items-center gap-3"><span class="c-warn">75,000 金幣</span> <button class="btn-ui !px-3 !py-1" onclick="game.buyItem('scroll_weapon')">購買</button></div></div>
@@ -5852,6 +5853,12 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
 
     getConsumableSellPrice: function(item, def) {
         if (!def) return 0;
+
+        // 🛡️【轉生藥水防洗錢金鐘罩】退款價格永遠對齊當前商店折扣價，淨利潤恆等於 0！
+        if (item?.itemId === 'potion_rebirth') {
+            return this.getShopPrice(def.price);
+        }
+
         if (def.sellPrice) return def.sellPrice;
         if (def.price) return Math.max(1, Math.floor(def.price * 0.35));
         const fallback = {
@@ -6278,16 +6285,34 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.renderInventory();
     },
 
-    buyItem: function(itemId) {
+   buyItem: function(itemId) {
         let def = ITEMS[itemId];
         if (!def || !def.price) return;
+
+        // 🛑【轉生藥水購買門檻與防手滑確認】
+        if (itemId === 'potion_rebirth') {
+            // 1. 等級防呆（彈窗攔截）
+            if (this.state.level < 90) {
+                alert('你必須達到90級才能購買轉生藥水!');
+                return;
+            }
+
+            // 2. 防手滑確認視窗（動態計算優惠後的實際花費）
+            let realPrice = this.getShopPrice(def.price);
+            if (!confirm(`確定要花費 ${realPrice.toLocaleString()} 金幣購買 1 瓶【轉生藥水】嗎？`)) {
+                return;
+            }
+        }
+
         let price = this.getShopPrice(def.price);
         if(this.state.adena >= price) {
             this.state.adena -= price;
             this.addInventory(itemId, 1, 0, false); 
             this.logSystem(`購買了 ${def.name}${this.getShopDiscountRate() > 0 ? `（優惠價 ${price.toLocaleString()} 金幣）` : ''}。`);
             this.updateUI();
-        } else this.logSystem(`金幣不足，無法購買 ${def.name}。`, 'danger');
+        } else {
+            this.logSystem(`金幣不足，無法購買 ${def.name}。`, 'danger');
+        }
     },
     buyItemQty: function(itemId, qty) {
         let def = ITEMS[itemId];
