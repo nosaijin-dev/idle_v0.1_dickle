@@ -5346,7 +5346,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
 
             let canSell = false;
             let sellPrice = 0;
-            if (['weapon','helmet','tshirt','armor','shield','cloak','boots','leggings','belt','amulet','earring','ring','gloves','quiver','pet_weapon','pet_armor'].includes(def.type)) {
+            if (['weapon','helmet','tshirt','armor','shield','cloak','boots','leggings','belt','amulet','earring','ring','gloves','quiver','pet_weapon','pet_armor','badge'].includes(def.type)) {
                 sellPrice = this.getEquipmentSellPrice(item, def);
                 canSell = sellPrice > 0;
             } else if (def.type === 'book') {
@@ -5363,6 +5363,9 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 canSell = sellPrice > 0;
             }
 
+            if (item.itemId === 'reborn_badge' || item.isRebornBadge || def.isRebornBadge) {
+                canSell = false;
+            }
             if (canSell) actions += `<button class="btn-ui c-sys border-gray-700" onclick="game.sellItem('${key}', ${sellPrice})" title="售價: ${sellPrice} 金幣">販賣</button>`;
             if (def.type === 'quest') actions += ` <button class="btn-ui c-err border-red-900" onclick="game.discardItem('${key}')">丟棄</button>`;
 
