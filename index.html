@@ -5094,6 +5094,7 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         else if(def.type === 'pet_fruit') typeName = '寵物道具';
         else if(def.type === 'stat_reset') typeName = '回憶道具';
         else if(def.type === 'elixir') typeName = '萬能藥';
+        else if(def.type === 'rebirth') typeName = '轉生藥水';
         
         if (typeName) html += `<div class="c-sys mb-2">[${typeName}]</div>`;
 
@@ -5329,6 +5330,13 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
                 actions += `<button class="btn-ui c-success border-green-800" onclick="game.useElixir('${key}')">使用</button> `;
                 if (this.state.activeCompanion && this.state.companions?.[this.state.activeCompanion]) {
                     actions += `<button class="btn-ui c-info border-blue-800" onclick="game.useElixirOnActiveCompanion('${key}')">隊友使用</button> `;
+                }
+            } else if(def.type === 'rebirth') {
+                actions += `<button class="btn-ui border-blue-700 text-blue-300" onclick="game.showItemDetail('${key}')">詳細</button> `;
+                actions += `<button class="btn-ui c-success border-green-800" onclick="game.useRebirthPotion('${key}')">使用</button> `;
+                // 🛡️ 僅當前場上有出戰隊友時，動態渲染【隊友使用】
+                if (this.state.activeCompanion && this.state.companions?.[this.state.activeCompanion]) {
+                    actions += `<button class="btn-ui c-info border-blue-800" onclick="game.useRebirthPotionOnActiveCompanion('${key}')">隊友使用</button> `;
                 }
             } else if(def.type === 'pet_scroll') {
                 actions += `<button class="btn-ui c-info border-blue-800" onclick="game.revivePetWithScroll('${key}')">復活</button> `;
