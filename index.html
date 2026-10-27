@@ -5745,6 +5745,280 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.updateSettingsUI();
         this.renderInventory();
     },
+    playRebirthCinematic: function(callback) {
+        // 建立全螢幕純黑宇宙遮罩（防透底 #050507）
+        const curtain = document.createElement('div');
+        curtain.id = 'rebirth-cinematic-overlay';
+        curtain.className = 'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050507] opacity-0 transition-opacity duration-1000 ease-out select-none';
+        
+        // 判斷是否為 2 轉以上熟手（大小姐人因定調：1 轉初生不顯示跳過，2 轉以上才顯形）
+        const isVeteran = (this.state.rebornCount || 0) >= 2;
+        const skipBtnHtml = isVeteran ? `
+            <div id="rebirth-skip-hint" class="absolute bottom-8 right-8 text-xs text-gray-500 hover:text-gray-300 cursor-pointer animate-pulse transition-opacity duration-700">
+                [點擊任意處跳過]
+            </div>` : '';
+
+        curtain.innerHTML = `
+            <div class="max-w-xl px-6 text-center">
+                <p id="rebirth-cine-text" class="text-gray-200 text-lg md:text-xl italic tracking-widest leading-relaxed opacity-0 transition-opacity duration-1000 ease-out font-serif" style="text-shadow: 0 0 12px rgba(255,255,255,0.35);">
+                    你飲下了轉生藥水，陣陣恍惚間，<br>一股神祕力量帶著你穿梭於次元象限之間……
+                </p>
+                <div class="mt-6 mx-auto w-24 h-0.5 bg-gradient-to-r from-transparent via-green-400/50 to-transparent opacity-0 transition-opacity duration-1000" id="rebirth-cine-line"></div>
+            </div>
+            ${skipBtnHtml}
+        `;
+        document.body.appendChild(curtain);
+
+        // 動態排程控制器
+        let isEnded = false;
+        const cleanupAndFinish = () => {
+            if (isEnded) return;
+            isEnded = true;
+            curtain.classList.remove('opacity-100');
+            curtain.classList.add('opacity-0');
+            setTimeout(() => {
+                curtain.remove();
+                if (typeof callback === 'function') callback();
+            }, 800);
+        };
+
+        // 2 轉以上允許點擊任意處快進跳過
+        if (isVeteran) {
+            curtain.addEventListener('click', cleanupAndFinish);
+        }
+
+        // 啟動轉場動畫序列
+        requestAnimationFrame(() => {
+            curtain.classList.remove('opacity-0');
+            curtain.classList.add('opacity-100'); // 黑幕 1.0s 淡入
+            
+            setTimeout(() => {
+                if (isEnded) return;
+                const text = document.getElementById('rebirth-cine-text');
+                const line = document.getElementById('rebirth-cine-line');
+                if (text) text.classList.remove('opacity-0');
+                if (line) line.classList.remove('opacity-0');
+            }, 800);
+
+            // 完整播放時長：約 3.6 秒後淡出並銜接回調
+            setTimeout(() => {
+                cleanupAndFinish();
+            }, 3600);
+        });
+    },
+    useRebirthPotion: function(itemKey) {
+        const item = this.state.inventory[itemKey];
+        const def = item && ITEMS[item.itemId];
+        if (!item || !def || def.type !== 'rebirth') return;
+
+        // 1. 等級硬檢查
+        if (this.state.level < 90) {
+            alert('你尚未達到 90 級，無法承受轉生藥水的神聖力量！');
+            return;
+        }
+
+        // 2. 獨行檢查：不能帶寵物或隊友
+        const hasPet = !!this.state.activePet;
+        const hasCompanion = !!(this.getActiveCompanion && this.getActiveCompanion());
+        if (hasPet || hasCompanion) {
+            alert('轉生之路必須獨自前行，請先收回寵物與出戰隊友！');
+            return;
+        }
+
+        // 3. 命運確認彈窗
+        if (!confirm('使用轉生藥水將回到等級1、重置50級以上升級獎勵點數、並回到隱藏之谷。你確定要進行轉生嗎？')) return;
+
+        // 4. 原子扣除與重置
+        this.removeInventory(itemKey, 1);
+        this.state.rebornCount = (this.state.rebornCount || 0) + 1;
+        this.state.isRebornInfant = true;       // 嬰兒期冬眠鎖
+        this.state.hasMetDGod = false;           // 重置 13 級見神記憶
+
+        this.state.level = 1;
+        this.state.exp = 0;
+        const cls = this.getClassDef();
+        
+        // 重置原生基礎數值，保留創角初始點數
+        this.normalizeElixirStats();
+        this.state.baseStats = { ...cls.baseStats };
+        this.state.createPoints = cls.createPoints || 0; 
+        this.state.bonusPoints = 0;
+        this.state.bonusPointsGrantedLevel = 1;
+        this.state.bonusPointMigrationV1 = true;
+
+        this.calculateMaxHpMp();
+        this.state.hp = this.state.maxHp;
+        this.state.mp = this.state.maxMp;
+
+        // 5. 鎖定戰鬥，強制移轉至新手隱谷
+        this.state.isAssigningRebornStats = true;
+        this.changeMap('hidden_valley');
+        this.logSystem(`你完成了第 ${this.state.rebornCount} 次轉生，回到等級1並被傳送至隱藏之谷！`, 'reward');
+
+        this.updateUI();
+        this.renderInventory();
+
+        // 🌌 啟動次元穿越過場
+        this.playRebirthCinematic(() => {
+            this.showRebornStage1Modal();
+        });
+    },
+
+    // ==========================================
+    // 🔮【彈窗一：獲得轉生獎勵點數】
+    // ==========================================
+    showRebornStage1Modal: function() {
+        this.tempRebornAlloc = { str: 0, dex: 0, con: 0, int: 0, wis: 0 };
+        this.tempRebornRemaining = 5;
+
+        let modal = document.getElementById('reborn-stage-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'reborn-stage-modal';
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md opacity-0 transition-opacity duration-500 ease-out';
+            document.body.appendChild(modal);
+        }
+        this.renderRebornStage1Content(modal);
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            modal.classList.add('opacity-100');
+        });
+    },
+
+    renderRebornStage1Content: function(modal) {
+        const stats = ['str', 'dex', 'con', 'int', 'wis'];
+        const labels = { str: '⚔️ 力量 (STR)', dex: '🏹 敏捷 (DEX)', con: '🛡️ 體質 (CON)', int: '🔮 智力 (INT)', wis: '✨ 精神 (WIS)' };
+        let html = `
+        <div class="bg-gray-900 border border-green-500/40 rounded-lg p-6 w-96 max-w-full shadow-2xl text-center">
+            <h3 class="text-xl font-bold text-green-400 mb-2 animate-pulse" style="text-shadow: 0 0 10px rgba(74,222,128,0.4);">【 獲得轉生獎勵點數 】</h3>
+            <p class="text-gray-400 text-xs mb-6">你已成功轉生，獲得5點永久能力值獎勵! (此獎勵點數不會被回憶蠟燭重置)</p>
+            <div class="space-y-3 text-left mb-6">`;
+
+        stats.forEach(stat => {
+            const val = this.tempRebornAlloc[stat];
+            const disableMinus = val <= 0 ? 'opacity-20 pointer-events-none' : '';
+            const disablePlus = this.tempRebornRemaining <= 0 ? 'opacity-20 pointer-events-none' : '';
+            html += `
+            <div class="flex items-center justify-between bg-gray-950 p-2.5 rounded border border-gray-800">
+                <span class="text-gray-200 font-medium text-sm">${labels[stat]}</span>
+                <div class="flex items-center gap-3">
+                    <button class="btn-ui !px-2.5 !py-0.5 text-red-400 border-red-950 bg-red-950/10 ${disableMinus}" onclick="game.handleRebornStage1Stat('${stat}', -1)">-</button>
+                    <span class="text-green-400 font-bold w-6 text-center text-base">${val}</span>
+                    <button class="btn-ui !px-2.5 !py-0.5 text-green-400 border-green-950 bg-green-950/10 ${disablePlus}" onclick="game.handleRebornStage1Stat('${stat}', 1)">+</button>
+                </div>
+            </div>`;
+        });
+
+        const canConfirm = this.tempRebornRemaining === 0;
+        const confirmBtnClass = canConfirm ? 'bg-green-600 hover:bg-green-500 text-white cursor-pointer shadow-lg shadow-green-900/40' : 'bg-gray-800 text-gray-500 border-gray-700';
+
+        html += `
+            </div>
+            <div class="mb-6 bg-gray-950 p-2 rounded text-sm text-center border border-dashed border-gray-800">
+                剩餘獎勵點數: <span class="text-xl font-bold ${this.tempRebornRemaining > 0 ? 'text-yellow-400 animate-pulse' : 'text-gray-400'}">${this.tempRebornRemaining}</span> 點
+            </div>
+            <button class="w-full py-2.5 rounded font-bold transition-all border text-base ${confirmBtnClass}" onclick="game.submitRebornStage1()">確認使用獎勵點數提升實力</button>
+        </div>`;
+        modal.innerHTML = html;
+    },
+
+    handleRebornStage1Stat: function(stat, change) {
+        if (change === 1 && this.tempRebornRemaining > 0) {
+            this.tempRebornAlloc[stat]++;
+            this.tempRebornRemaining--;
+        } else if (change === -1 && this.tempRebornAlloc[stat] > 0) {
+            this.tempRebornAlloc[stat]--;
+            this.tempRebornRemaining++;
+        }
+        const modal = document.getElementById('reborn-stage-modal');
+        if (modal) this.renderRebornStage1Content(modal);
+    },
+
+    submitRebornStage1: function() {
+        // 👑 大師兄人因防護：若未全部分配完，彈窗警告攔截
+        if (this.tempRebornRemaining !== 0) {
+            alert(`你尚有 ${this.tempRebornRemaining} 點獎勵點數未使用！請將點數全數分配完畢後，再點擊確認。`);
+            return;
+        }
+
+        // 永久年輪點數寫入 rebornStats
+        if (!this.state.rebornStats) this.state.rebornStats = { str: 0, dex: 0, con: 0, int: 0, wis: 0 };
+        for (let stat in this.tempRebornAlloc) {
+            this.state.rebornStats[stat] = (this.state.rebornStats[stat] || 0) + this.tempRebornAlloc[stat];
+        }
+
+        // 全量戰力刷新鏈
+        if (typeof this.getEffStat === 'function') this.getEffStat();
+        this.calculateMaxHpMp();
+        this.state.hp = this.state.maxHp;
+        this.state.mp = this.state.maxMp;
+        this.updateUI();
+
+        // 淡出第一階段，銜接第二階段
+        const modal = document.getElementById('reborn-stage-modal');
+        if (modal) {
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            setTimeout(() => { this.showRebornStage2Modal(); }, 500);
+        }
+    },
+
+    // ==========================================
+    // 📜【彈窗二：命運啟示（完整標籤修復版）】
+    // ==========================================
+    showRebornStage2Modal: function() {
+        const modal = document.getElementById('reborn-stage-modal');
+        if (!modal) return;
+
+        let html = `
+        <div class="bg-gray-900 border border-yellow-500/40 rounded-lg p-6 w-[420px] max-w-full shadow-2xl text-left">
+            <h3 class="text-xl font-bold text-yellow-400 mb-4 text-center" style="text-shadow: 0 0 10px rgba(234,179,8,0.3);">【 命運啟示 】</h3>
+            <div class="space-y-3.5 text-sm text-gray-300 mb-6 bg-gray-950 p-4 rounded border border-gray-800 max-h-64 overflow-y-auto">
+                <div class="flex items-start gap-2">
+                    <span class="text-green-400 font-bold">🌱</span>
+                    <p><span class="text-green-300 font-bold">【初生試煉】</span>你已重回隱藏之谷，當你重新修練至等級 13 時，宿命因果將再度轉動！</p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-red-400 font-bold">💀</span>
+                    <p><span class="text-red-300 font-bold">【世界法則轉變】</span>受到你的轉生之力影響，所有怪物的實力均有所提升！</p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-purple-400 font-bold">🗺️</span>
+                    <p><span class="text-purple-300 font-bold">【探索未知領域】</span>你已證明了自己的能力與資格，可以前往更多未知地圖挑戰！</p>
+                </div>
+            </div>
+            <button class="w-full py-2.5 rounded font-bold border border-yellow-600 bg-yellow-600 hover:bg-yellow-500 text-white transition-all text-base shadow-lg shadow-yellow-900/30 animate-bounce" onclick="game.finalizeRebirthCeremony()">
+                重入亞丁世界!
+            </button>
+        </div>`;
+        modal.innerHTML = html;
+        modal.classList.remove('opacity-0');
+        modal.classList.add('opacity-100');
+    },
+
+    // ==========================================
+    // ⚔️【儀式落幕：戰鬥打響】
+    // ==========================================
+    finalizeRebirthCeremony: function() {
+        const modal = document.getElementById('reborn-stage-modal');
+        if (modal) {
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.remove();
+
+                // 解除暫停戰鬥鎖
+                this.state.isAssigningRebornStats = false;
+                this.logSystem('【重入江湖】你以轉生之姿重新歸來，在隱藏之谷中開始了戰鬥！', 'success');
+
+                if (typeof this.getEffStat === 'function') this.getEffStat();
+                if (this.calculateMaxHpMp) this.calculateMaxHpMp();
+                if (this.updateUI) this.updateUI();
+                if (this.renderInventory) this.renderInventory();
+                if (this.spawnMonster) this.spawnMonster();
+            }, 500);
+        }
+    },
     useElixir: function(itemKey) {
         const item = this.state.inventory[itemKey];
         const def = item && ITEMS[item.itemId];
@@ -7551,6 +7825,8 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.state.mapChangeLoop = setTimeout(() => this.startBattle(), 1000);
     },
     spawnMonster: function() {
+        // 🔒 轉生獎勵點數未確認前，禁止任何怪物生成與自動戰鬥！
+       if(this.state.isAssigningRebornStats) return;
        if(this.state.hp <= 0) return;
 
         // 👑【13 級生怪攔截】非回訪且滿 13 級，立刻中止生怪並強制出谷見神！
