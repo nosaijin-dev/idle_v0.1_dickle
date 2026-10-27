@@ -6131,10 +6131,14 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
         this.sellAllBooks();
     },
 
-    sellAllTradableConsumables: function() {
+   sellAllTradableConsumables: function() {
         this.sellBulkItems(
             '可出售卷軸、藥水與寵物道具',
-            function(item, def) { return this.isTradableConsumable(item, def); },
+            (item, def) => { 
+                // 【轉生藥水神聖物理豁免】禁止一鍵出售，僅限手動單件退貨！
+                if (item && item.itemId === 'potion_rebirth') return false;
+                return this.isTradableConsumable(item, def); 
+            },
             this.getConsumableSellPrice,
             '會出售卷軸、藥水、寵物復活卷軸與寵物進化果實。'
         );
