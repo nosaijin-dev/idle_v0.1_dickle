@@ -3922,11 +3922,13 @@ else if (type === 'skill-wizard') color = 'c-skill-wizard';
     getPetMaxHp: function(petId) {
         const def = PETS[petId], data = this.state.pets?.[petId];
         if (!def || !data) return 1;
-        const lvl = Math.max(1, parseInt(data.level) || 1);
+        const evolved = data.evolved ? 1.35 : 1;
+        const bonusRate = Math.max(0, this.getAchievementPassiveBonuses().petHpRate || 0);
         const eq = this.getPetEquipStats(petId);
-        let hp = def.baseHp + lvl * def.hpPerLevel + (eq.hp || 0); // 🐾 注入巨巖之牙的 HP+150！
-        if (data.evolved) hp = Math.floor(hp * 1.35);
-        return Math.max(1, hp);
+        
+        // 🐾 對齊原廠 hpBase + getPetLevel + hpPerLevel，並注入裝備 eq.hp！
+        const baseHp = (def.hpBase || 0) + this.getPetLevel(petId) * (def.hpPerLevel || 0) + (eq.hp || 0);
+        return Math.max(1, Math.floor(baseHp * evolved * (1 + bonusRate)));
     },
     getPetMaxMp: function(petId) {
         const def = PETS[petId], data = this.state.pets?.[petId];
